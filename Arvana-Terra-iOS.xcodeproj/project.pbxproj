@@ -1,0 +1,706 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A001 /* ArvanaTerraiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001 /* ArvanaTerraiOSApp.swift */; };
+		A002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F002 /* ContentView.swift */; };
+		A003 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F003 /* AppConfig.swift */; };
+		A004 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F004 /* APIService.swift */; };
+		A005 /* SocketService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F005 /* SocketService.swift */; };
+		A010 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = F010 /* User.swift */; };
+		A011 /* Land.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011 /* Land.swift */; };
+		A012 /* Property.swift in Sources */ = {isa = PBXBuildFile; fileRef = F012 /* Property.swift */; };
+		A013 /* Room.swift in Sources */ = {isa = PBXBuildFile; fileRef = F013 /* Room.swift */; };
+		A014 /* Equipment.swift in Sources */ = {isa = PBXBuildFile; fileRef = F014 /* Equipment.swift */; };
+		A015 /* Contract.swift in Sources */ = {isa = PBXBuildFile; fileRef = F015 /* Contract.swift */; };
+		A016 /* ChatRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = F016 /* ChatRoom.swift */; };
+		A017 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = F017 /* Task.swift */; };
+		A018 /* Employee.swift in Sources */ = {isa = PBXBuildFile; fileRef = F018 /* Employee.swift */; };
+		A019 /* Vendor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F019 /* Vendor.swift */; };
+		A020 /* SnsPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = F020 /* SnsPost.swift */; };
+		A021 /* BusinessOpportunity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F021 /* BusinessOpportunity.swift */; };
+		A022 /* AssetValuation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F022 /* AssetValuation.swift */; };
+		A023 /* Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F023 /* Notification.swift */; };
+		A030 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F030 /* AuthViewModel.swift */; };
+		A031 /* LandViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F031 /* LandViewModel.swift */; };
+		A032 /* PropertyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F032 /* PropertyViewModel.swift */; };
+		A033 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F033 /* ChatViewModel.swift */; };
+		A034 /* EquipmentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F034 /* EquipmentViewModel.swift */; };
+		A035 /* ContractViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F035 /* ContractViewModel.swift */; };
+		A036 /* TaskViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F036 /* TaskViewModel.swift */; };
+		A037 /* EmployeeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F037 /* EmployeeViewModel.swift */; };
+		A038 /* VendorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F038 /* VendorViewModel.swift */; };
+		A039 /* SnsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F039 /* SnsViewModel.swift */; };
+		A040 /* OpportunityViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F040 /* OpportunityViewModel.swift */; };
+		A041 /* ValuationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F041 /* ValuationViewModel.swift */; };
+		A050 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F050 /* LoginView.swift */; };
+		A051 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F051 /* RegisterView.swift */; };
+		A052 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F052 /* DashboardView.swift */; };
+		A053 /* PublicPropertyListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F053 /* PublicPropertyListView.swift */; };
+		A054 /* PublicPropertyDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F054 /* PublicPropertyDetailView.swift */; };
+		A055 /* PublicLandListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F055 /* PublicLandListView.swift */; };
+		A056 /* PublicLandDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F056 /* PublicLandDetailView.swift */; };
+		A057 /* MyPropertyListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F057 /* MyPropertyListView.swift */; };
+		A058 /* MyPropertyDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F058 /* MyPropertyDetailView.swift */; };
+		A059 /* PropertyManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F059 /* PropertyManageView.swift */; };
+		A060 /* PropertyChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F060 /* PropertyChatListView.swift */; };
+		A061 /* MyLandListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F061 /* MyLandListView.swift */; };
+		A062 /* MyLandDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F062 /* MyLandDetailView.swift */; };
+		A063 /* EquipmentManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F063 /* EquipmentManageView.swift */; };
+		A064 /* EquipmentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F064 /* EquipmentDetailView.swift */; };
+		A065 /* ContractListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F065 /* ContractListView.swift */; };
+		A066 /* ContractDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F066 /* ContractDetailView.swift */; };
+		A067 /* TaskManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F067 /* TaskManageView.swift */; };
+		A068 /* RoomListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F068 /* RoomListView.swift */; };
+		A069 /* RoomDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F069 /* RoomDetailView.swift */; };
+		A070 /* EmployeeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F070 /* EmployeeListView.swift */; };
+		A071 /* EmployeeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F071 /* EmployeeDetailView.swift */; };
+		A072 /* VendorListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F072 /* VendorListView.swift */; };
+		A073 /* VendorDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F073 /* VendorDetailView.swift */; };
+		A074 /* VisualizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F074 /* VisualizationView.swift */; };
+		A075 /* OpportunitiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F075 /* OpportunitiesView.swift */; };
+		A076 /* ValuationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F076 /* ValuationView.swift */; };
+		A077 /* SnsTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F077 /* SnsTimelineView.swift */; };
+		A078 /* SnsPostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F078 /* SnsPostDetailView.swift */; };
+		A079 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F079 /* SettingsView.swift */; };
+		A080 /* PropertyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F080 /* PropertyCard.swift */; };
+		A081 /* LandCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F081 /* LandCard.swift */; };
+		A082 /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = F082 /* ChatBubble.swift */; };
+		A083 /* StatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F083 /* StatusBadge.swift */; };
+		A084 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F084 /* LoadingView.swift */; };
+		A085 /* ErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F085 /* ErrorView.swift */; };
+		A086 /* ThumbnailImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F086 /* ThumbnailImageView.swift */; };
+		A087 /* ChatRoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F087 /* ChatRoomView.swift */; };
+		B001 /* Arvana_Terra_iOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001 /* Arvana_Terra_iOSTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F001 /* ArvanaTerraiOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArvanaTerraiOSApp.swift; sourceTree = "<group>"; };
+		F002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F003 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		F004 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		F005 /* SocketService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketService.swift; sourceTree = "<group>"; };
+		F010 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		F011 /* Land.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Land.swift; sourceTree = "<group>"; };
+		F012 /* Property.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Property.swift; sourceTree = "<group>"; };
+		F013 /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
+		F014 /* Equipment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Equipment.swift; sourceTree = "<group>"; };
+		F015 /* Contract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Contract.swift; sourceTree = "<group>"; };
+		F016 /* ChatRoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatRoom.swift; sourceTree = "<group>"; };
+		F017 /* Task.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
+		F018 /* Employee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Employee.swift; sourceTree = "<group>"; };
+		F019 /* Vendor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vendor.swift; sourceTree = "<group>"; };
+		F020 /* SnsPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnsPost.swift; sourceTree = "<group>"; };
+		F021 /* BusinessOpportunity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BusinessOpportunity.swift; sourceTree = "<group>"; };
+		F022 /* AssetValuation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetValuation.swift; sourceTree = "<group>"; };
+		F023 /* Notification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notification.swift; sourceTree = "<group>"; };
+		F030 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		F031 /* LandViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandViewModel.swift; sourceTree = "<group>"; };
+		F032 /* PropertyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyViewModel.swift; sourceTree = "<group>"; };
+		F033 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
+		F034 /* EquipmentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquipmentViewModel.swift; sourceTree = "<group>"; };
+		F035 /* ContractViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractViewModel.swift; sourceTree = "<group>"; };
+		F036 /* TaskViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskViewModel.swift; sourceTree = "<group>"; };
+		F037 /* EmployeeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeViewModel.swift; sourceTree = "<group>"; };
+		F038 /* VendorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorViewModel.swift; sourceTree = "<group>"; };
+		F039 /* SnsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnsViewModel.swift; sourceTree = "<group>"; };
+		F040 /* OpportunityViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpportunityViewModel.swift; sourceTree = "<group>"; };
+		F041 /* ValuationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValuationViewModel.swift; sourceTree = "<group>"; };
+		F050 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		F051 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
+		F052 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		F053 /* PublicPropertyListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicPropertyListView.swift; sourceTree = "<group>"; };
+		F054 /* PublicPropertyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicPropertyDetailView.swift; sourceTree = "<group>"; };
+		F055 /* PublicLandListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicLandListView.swift; sourceTree = "<group>"; };
+		F056 /* PublicLandDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicLandDetailView.swift; sourceTree = "<group>"; };
+		F057 /* MyPropertyListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyPropertyListView.swift; sourceTree = "<group>"; };
+		F058 /* MyPropertyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyPropertyDetailView.swift; sourceTree = "<group>"; };
+		F059 /* PropertyManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyManageView.swift; sourceTree = "<group>"; };
+		F060 /* PropertyChatListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyChatListView.swift; sourceTree = "<group>"; };
+		F061 /* MyLandListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyLandListView.swift; sourceTree = "<group>"; };
+		F062 /* MyLandDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyLandDetailView.swift; sourceTree = "<group>"; };
+		F063 /* EquipmentManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquipmentManageView.swift; sourceTree = "<group>"; };
+		F064 /* EquipmentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquipmentDetailView.swift; sourceTree = "<group>"; };
+		F065 /* ContractListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractListView.swift; sourceTree = "<group>"; };
+		F066 /* ContractDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDetailView.swift; sourceTree = "<group>"; };
+		F067 /* TaskManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskManageView.swift; sourceTree = "<group>"; };
+		F068 /* RoomListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomListView.swift; sourceTree = "<group>"; };
+		F069 /* RoomDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailView.swift; sourceTree = "<group>"; };
+		F070 /* EmployeeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeListView.swift; sourceTree = "<group>"; };
+		F071 /* EmployeeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeDetailView.swift; sourceTree = "<group>"; };
+		F072 /* VendorListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorListView.swift; sourceTree = "<group>"; };
+		F073 /* VendorDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorDetailView.swift; sourceTree = "<group>"; };
+		F074 /* VisualizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualizationView.swift; sourceTree = "<group>"; };
+		F075 /* OpportunitiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpportunitiesView.swift; sourceTree = "<group>"; };
+		F076 /* ValuationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValuationView.swift; sourceTree = "<group>"; };
+		F077 /* SnsTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnsTimelineView.swift; sourceTree = "<group>"; };
+		F078 /* SnsPostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnsPostDetailView.swift; sourceTree = "<group>"; };
+		F079 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F080 /* PropertyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyCard.swift; sourceTree = "<group>"; };
+		F081 /* LandCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandCard.swift; sourceTree = "<group>"; };
+		F082 /* ChatBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubble.swift; sourceTree = "<group>"; };
+		F083 /* StatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadge.swift; sourceTree = "<group>"; };
+		F084 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
+		F085 /* ErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorView.swift; sourceTree = "<group>"; };
+		F086 /* ThumbnailImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailImageView.swift; sourceTree = "<group>"; };
+		F087 /* ChatRoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatRoomView.swift; sourceTree = "<group>"; };
+		T001 /* Arvana_Terra_iOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arvana_Terra_iOSTests.swift; sourceTree = "<group>"; };
+		PROD001 /* Arvana-Terra-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Arvana-Terra-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		TEST001 /* Arvana-Terra-iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Arvana-Terra-iOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		MAIN_GROUP = {
+			isa = PBXGroup;
+			children = (
+				SRC_GROUP /* Arvana-Terra-iOS */,
+				TEST_GROUP /* Arvana-Terra-iOSTests */,
+				PRODUCTS_GROUP /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		PRODUCTS_GROUP = {
+			isa = PBXGroup;
+			children = (
+				PROD001 /* Arvana-Terra-iOS.app */,
+				TEST001 /* Arvana-Terra-iOSTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		SRC_GROUP = {
+			isa = PBXGroup;
+			children = (
+				F001 /* ArvanaTerraiOSApp.swift */,
+				F002 /* ContentView.swift */,
+				CONFIG_GROUP /* Config */,
+				SERVICES_GROUP /* Services */,
+				MODELS_GROUP /* Models */,
+				VIEWMODELS_GROUP /* ViewModels */,
+				VIEWS_GROUP /* Views */,
+			);
+			path = "Arvana-Terra-iOS";
+			sourceTree = "<group>";
+		};
+		CONFIG_GROUP = {
+			isa = PBXGroup;
+			children = (
+				F003 /* AppConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		SERVICES_GROUP = {
+			isa = PBXGroup;
+			children = (
+				F004 /* APIService.swift */,
+				F005 /* SocketService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		MODELS_GROUP = {
+			isa = PBXGroup;
+			children = (
+				F010 /* User.swift */,
+				F011 /* Land.swift */,
+				F012 /* Property.swift */,
+				F013 /* Room.swift */,
+				F014 /* Equipment.swift */,
+				F015 /* Contract.swift */,
+				F016 /* ChatRoom.swift */,
+				F017 /* Task.swift */,
+				F018 /* Employee.swift */,
+				F019 /* Vendor.swift */,
+				F020 /* SnsPost.swift */,
+				F021 /* BusinessOpportunity.swift */,
+				F022 /* AssetValuation.swift */,
+				F023 /* Notification.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		VIEWMODELS_GROUP = {
+			isa = PBXGroup;
+			children = (
+				F030 /* AuthViewModel.swift */,
+				F031 /* LandViewModel.swift */,
+				F032 /* PropertyViewModel.swift */,
+				F033 /* ChatViewModel.swift */,
+				F034 /* EquipmentViewModel.swift */,
+				F035 /* ContractViewModel.swift */,
+				F036 /* TaskViewModel.swift */,
+				F037 /* EmployeeViewModel.swift */,
+				F038 /* VendorViewModel.swift */,
+				F039 /* SnsViewModel.swift */,
+				F040 /* OpportunityViewModel.swift */,
+				F041 /* ValuationViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		VIEWS_GROUP = {
+			isa = PBXGroup;
+			children = (
+				AUTH_GROUP /* Auth */,
+				DASHBOARD_GROUP /* Dashboard */,
+				PUBLIC_GROUP /* Public */,
+				MYPROPS_GROUP /* MyProperties */,
+				MYLANDS_GROUP /* MyLands */,
+				EQUIP_GROUP /* Equipment */,
+				CONTRACT_GROUP /* Contracts */,
+				TASKS_GROUP /* Tasks */,
+				ROOMS_GROUP /* Rooms */,
+				EMPLOYEES_GROUP /* Employees */,
+				VENDORS_GROUP /* Vendors */,
+				VIZ_GROUP /* Visualization */,
+				OPP_GROUP /* Opportunities */,
+				VAL_GROUP /* Valuation */,
+				SNS_GROUP /* SNS */,
+				SETTINGS_GROUP /* Settings */,
+				COMPONENTS_GROUP /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AUTH_GROUP = {
+			isa = PBXGroup;
+			children = (F050 /* LoginView.swift */, F051 /* RegisterView.swift */);
+			path = Auth; sourceTree = "<group>";
+		};
+		DASHBOARD_GROUP = {
+			isa = PBXGroup;
+			children = (F052 /* DashboardView.swift */);
+			path = Dashboard; sourceTree = "<group>";
+		};
+		PUBLIC_GROUP = {
+			isa = PBXGroup;
+			children = (F053 /* PublicPropertyListView.swift */, F054 /* PublicPropertyDetailView.swift */, F055 /* PublicLandListView.swift */, F056 /* PublicLandDetailView.swift */);
+			path = Public; sourceTree = "<group>";
+		};
+		MYPROPS_GROUP = {
+			isa = PBXGroup;
+			children = (F057 /* MyPropertyListView.swift */, F058 /* MyPropertyDetailView.swift */, F059 /* PropertyManageView.swift */, F060 /* PropertyChatListView.swift */);
+			path = MyProperties; sourceTree = "<group>";
+		};
+		MYLANDS_GROUP = {
+			isa = PBXGroup;
+			children = (F061 /* MyLandListView.swift */, F062 /* MyLandDetailView.swift */);
+			path = MyLands; sourceTree = "<group>";
+		};
+		EQUIP_GROUP = {
+			isa = PBXGroup;
+			children = (F063 /* EquipmentManageView.swift */, F064 /* EquipmentDetailView.swift */);
+			path = Equipment; sourceTree = "<group>";
+		};
+		CONTRACT_GROUP = {
+			isa = PBXGroup;
+			children = (F065 /* ContractListView.swift */, F066 /* ContractDetailView.swift */);
+			path = Contracts; sourceTree = "<group>";
+		};
+		TASKS_GROUP = {
+			isa = PBXGroup;
+			children = (F067 /* TaskManageView.swift */);
+			path = Tasks; sourceTree = "<group>";
+		};
+		ROOMS_GROUP = {
+			isa = PBXGroup;
+			children = (F068 /* RoomListView.swift */, F069 /* RoomDetailView.swift */);
+			path = Rooms; sourceTree = "<group>";
+		};
+		EMPLOYEES_GROUP = {
+			isa = PBXGroup;
+			children = (F070 /* EmployeeListView.swift */, F071 /* EmployeeDetailView.swift */);
+			path = Employees; sourceTree = "<group>";
+		};
+		VENDORS_GROUP = {
+			isa = PBXGroup;
+			children = (F072 /* VendorListView.swift */, F073 /* VendorDetailView.swift */);
+			path = Vendors; sourceTree = "<group>";
+		};
+		VIZ_GROUP = {
+			isa = PBXGroup;
+			children = (F074 /* VisualizationView.swift */);
+			path = Visualization; sourceTree = "<group>";
+		};
+		OPP_GROUP = {
+			isa = PBXGroup;
+			children = (F075 /* OpportunitiesView.swift */);
+			path = Opportunities; sourceTree = "<group>";
+		};
+		VAL_GROUP = {
+			isa = PBXGroup;
+			children = (F076 /* ValuationView.swift */);
+			path = Valuation; sourceTree = "<group>";
+		};
+		SNS_GROUP = {
+			isa = PBXGroup;
+			children = (F077 /* SnsTimelineView.swift */, F078 /* SnsPostDetailView.swift */);
+			path = SNS; sourceTree = "<group>";
+		};
+		SETTINGS_GROUP = {
+			isa = PBXGroup;
+			children = (F079 /* SettingsView.swift */);
+			path = Settings; sourceTree = "<group>";
+		};
+		COMPONENTS_GROUP = {
+			isa = PBXGroup;
+			children = (
+				F080 /* PropertyCard.swift */,
+				F081 /* LandCard.swift */,
+				F082 /* ChatBubble.swift */,
+				F083 /* StatusBadge.swift */,
+				F084 /* LoadingView.swift */,
+				F085 /* ErrorView.swift */,
+				F086 /* ThumbnailImageView.swift */,
+				F087 /* ChatRoomView.swift */,
+			);
+			path = Components; sourceTree = "<group>";
+		};
+		TEST_GROUP = {
+			isa = PBXGroup;
+			children = (T001 /* Arvana_Terra_iOSTests.swift */);
+			path = "Arvana-Terra-iOSTests"; sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		TARGET_APP = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BUILD_CONFIG_LIST_APP;
+			buildPhases = (
+				SOURCES_APP /* Sources */,
+				FRAMEWORKS_APP /* Frameworks */,
+				RESOURCES_APP /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = "Arvana-Terra-iOS";
+			productName = "Arvana-Terra-iOS";
+			productReference = PROD001 /* Arvana-Terra-iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		TARGET_TESTS = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BUILD_CONFIG_LIST_TESTS;
+			buildPhases = (
+				SOURCES_TESTS /* Sources */,
+				FRAMEWORKS_TESTS /* Frameworks */,
+			);
+			buildRules = ();
+			dependencies = (
+				TEST_DEP /* PBXTargetDependency */,
+			);
+			name = "Arvana-Terra-iOSTests";
+			productName = "Arvana-Terra-iOSTests";
+			productReference = TEST001 /* Arvana-Terra-iOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		PROJECT = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					TARGET_APP = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					TARGET_TESTS = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = TARGET_APP;
+					};
+				};
+			};
+			buildConfigurationList = BUILD_CONFIG_LIST_PROJECT;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = ja;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, ja, Base);
+			mainGroup = MAIN_GROUP;
+			productRefGroup = PRODUCTS_GROUP;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				TARGET_APP,
+				TARGET_TESTS,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		SOURCES_APP = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A001, A002, A003, A004, A005,
+				A010, A011, A012, A013, A014, A015, A016, A017, A018, A019, A020, A021, A022, A023,
+				A030, A031, A032, A033, A034, A035, A036, A037, A038, A039, A040, A041,
+				A050, A051, A052, A053, A054, A055, A056, A057, A058, A059, A060,
+				A061, A062, A063, A064, A065, A066, A067, A068, A069, A070, A071,
+				A072, A073, A074, A075, A076, A077, A078, A079,
+				A080, A081, A082, A083, A084, A085, A086, A087,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		SOURCES_TESTS = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (B001);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FRAMEWORKS_APP = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FRAMEWORKS_TESTS = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		RESOURCES_APP = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		TEST_DEP = {
+			isa = PBXTargetDependency;
+			target = TARGET_APP;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		DEBUG_APP = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_CYCLE = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)");
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity = "{NSAllowsArbitraryLoads = YES;}";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "jp.psy.ArvanaTerraiOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		RELEASE_APP = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity = "{NSAllowsArbitraryLoads = YES;}";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "jp.psy.ArvanaTerraiOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DEBUG_TESTS = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "jp.psy.ArvanaTerraiOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Arvana-Terra-iOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Arvana-Terra-iOS";
+			};
+			name = Debug;
+		};
+		RELEASE_TESTS = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "jp.psy.ArvanaTerraiOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Arvana-Terra-iOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Arvana-Terra-iOS";
+			};
+			name = Release;
+		};
+		DEBUG_PROJECT = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		RELEASE_PROJECT = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.9;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BUILD_CONFIG_LIST_PROJECT = {
+			isa = XCConfigurationList;
+			buildConfigurations = (DEBUG_PROJECT, RELEASE_PROJECT);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BUILD_CONFIG_LIST_APP = {
+			isa = XCConfigurationList;
+			buildConfigurations = (DEBUG_APP, RELEASE_APP);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BUILD_CONFIG_LIST_TESTS = {
+			isa = XCConfigurationList;
+			buildConfigurations = (DEBUG_TESTS, RELEASE_TESTS);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = PROJECT;
+}
