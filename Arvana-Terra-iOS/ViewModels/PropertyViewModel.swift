@@ -1,88 +1,138 @@
 import Foundation
 import SwiftUI
-import PhotosUI
 
 @MainActor
 class PropertyViewModel: ObservableObject {
     @Published var publicProperties: [Property] = []
     @Published var myProperties: [Property] = []
+    @Published var selectedProperty: Property?
+    @Published var rooms: [Room] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    // Create / Edit fields
-    @Published var name = ""
-    @Published var address = ""
-    @Published var description = ""
-    @Published var price = ""
-    @Published var selectedImages: [UIImage] = []
-    @Published var isSubmitting = false
-    @Published var isSuccess = false
+    private let apiService = APIService.shared
 
-    func loadPublicProperties() async {
+    func fetchPublicProperties() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
         do {
-            publicProperties = try await APIService.shared.getPublicProperties()
+            publicProperties = try await apiService.getPublicProperties()
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
         } catch {
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
-    func loadMyProperties() async {
+    func fetchMyProperties() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
         do {
-            myProperties = try await APIService.shared.getMyProperties()
+            myProperties = try await apiService.getMyProperties()
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
         } catch {
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
-    func createProperty() async {
-        guard !name.isEmpty, !address.isEmpty else {
-            errorMessage = "物件名と住所は必須です"
-            return
-        }
-        isSubmitting = true
+    func fetchPropertyById(_ id: String) async {
+        isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
         do {
-            let imageData = selectedImages.compactMap { image -> (Data, String)? in
-                guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
-                return (data, "image/jpeg")
-            }
-            let created = try await APIService.shared.createProperty(
-                name: name,
-                address: address,
-                description: description.isEmpty ? nil : description,
-                price: Double(price),
-                imageData: imageData
+            selectedProperty = try await apiService.getPropertyById(id)
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func fetchRooms(propertyId: String) async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            rooms = try await apiService.getRooms(propertyId: propertyId)
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func createProperty(name: String, address: String, buildingType: String, floors: Int, totalRooms: Int, area: Double, status: String, isPublic: Bool, purchasePrice: Double?, notes: String?) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            let request = CreatePropertyRequest(
+                name: name, address: address, buildingType: buildingType,
+                floors: floors, totalRooms: totalRooms, area: area,
+                status: status, isPublic: isPublic,
+                purchasePrice: purchasePrice, notes: notes
             )
-            myProperties.insert(created, at: 0)
-            isSuccess = true
+            let newProperty = try await apiService.createProperty(request)
+            myProperties.insert(newProperty, at: 0)
+            return true
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+            return false
         } catch {
             errorMessage = error.localizedDescription
-        }
-        isSubmitting = false
-    }
-
-    func deleteProperty(_ id: String) async {
-        do {
-            try await APIService.shared.deleteProperty(id)
-            myProperties.removeAll { $0.id == id }
-        } catch {
-            errorMessage = error.localizedDescription
+            return false
         }
     }
 
-    func resetForm() {
-        name = ""
-        address = ""
-        description = ""
-        price = ""
-        selectedImages = []
-        isSuccess = false
+    func updateProperty(_ id: String, name: String?, address: String?, status: String?, isPublic: Bool?, currentValue: Double?, notes: String?) async -> Bool {
+        isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
+        do {
+            let request = UpdatePropertyRequest(
+                name: name, address: address, buildingType: nil,
+                floors: nil, totalRooms: nil, area: nil,
+                status: status, isPublic: isPublic,
+                currentValue: currentValue, notes: notes
+            )
+            let updated = try await apiService.updateProperty(id, request)
+            if let idx = myProperties.firstIndex(where: { $0.id == id }) {
+                myProperties[idx] = updated
+            }
+            selectedProperty = updated
+            return true
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+            return false
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    func deleteProperty(_ id: String) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            try await apiService.deleteProperty(id)
+            myProperties.removeAll { $0.id == id }
+            return true
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+            return false
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    var occupancyRate: Double {
+        guard !rooms.isEmpty else { return 0 }
+        let occupied = rooms.filter { $0.status == "occupied" }.count
+        return Double(occupied) / Double(rooms.count) * 100
     }
 }

@@ -1,219 +1,184 @@
 import SwiftUI
 
-// MARK: - 設定画面
 struct SettingsView: View {
     @EnvironmentObject var authVM: AuthViewModel
-    @ObservedObject var regionManager = RegionModeManager.shared
-
-    // 表示エリア設定
-    @State private var selectedMode: RegionModeManager.DisplayMode = RegionModeManager.shared.displayMode
-    @State private var displayPrefectures: [String] = RegionModeManager.shared.displayPrefectures
-
-    // プロフィール編集
-    @State private var profileName: String = ""
-    @State private var profilePhone: String = ""
-    @State private var profileAddress: String = ""
-    @State private var profilePrefecture: [String] = []
-    @State private var profilePrefectures: [String] = []
-
-    // 状態管理
-    @State private var isSavingArea = false
-    @State private var isSavingProfile = false
-    @State private var areaAlertMessage: String?
-    @State private var profileAlertMessage: String?
-    @State private var showAreaAlert = false
-    @State private var showProfileAlert = false
+    @State private var showLogoutAlert = false
+    @State private var notificationsEnabled = true
+    @State private var darkModeEnabled = false
+    @AppStorage("apiBaseURL") private var apiBaseURL = AppConfig.apiBaseURL
 
     var body: some View {
         NavigationStack {
-            Form {
-                // MARK: 表示エリア設定セクション
+            List {
+                // Profile section
                 Section {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("表示モードを選択してください")
-                            .font(.caption)
-                            .foregroundColor(Color.textGray)
-
-                        Picker("表示モード", selection: $selectedMode) {
-                            ForEach(RegionModeManager.DisplayMode.allCases, id: \.self) { mode in
-                                Label(mode.label, systemImage: mode.icon)
-                                    .tag(mode)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-
-                        if selectedMode == .regional {
-                            Divider()
-                            PrefectureSelectorView(
-                                selected: $displayPrefectures,
-                                label: "表示する都道府県（複数選択可）",
-                                singleSelection: false
+                    HStack(spacing: 14) {
+                        Circle()
+                            .fill(Color.accentBlue.opacity(0.15))
+                            .frame(width: 60, height: 60)
+                            .overlay(
+                                Text(String(authVM.currentUser?.name.prefix(1) ?? "U"))
+                                    .font(.title).fontWeight(.bold).foregroundColor(.primaryNavy)
                             )
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(authVM.currentUser?.name ?? "ユーザー")
+                                .font(.headline).foregroundColor(.textDark)
+                            Text(authVM.currentUser?.email ?? "")
+                                .font(.subheadline).foregroundColor(.textGray)
+                            Text(roleLabel(authVM.currentUser?.role ?? ""))
+                                .font(.caption)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8).padding(.vertical, 3)
+                                .background(Color.primaryNavy)
+                                .clipShape(Capsule())
                         }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption).foregroundColor(.textGray)
                     }
                     .padding(.vertical, 4)
-                } header: {
-                    Text("表示エリア設定")
-                } footer: {
-                    Text("地域モードでは選択した都道府県の物件・土地のみを一覧表示します。")
-                        .font(.caption2)
                 }
 
+                // Navigation items
+                Section("管理") {
+                    SettingsRow(icon: "building.2.fill", title: "マイ物件", subtitle: "物件の管理", color: .primaryNavy) {
+                        NavigationLink("") { MyPropertyListView() }
+                    }
+                    SettingsNavRow(icon: "map.fill", title: "マイ土地", color: .secondaryBlue) {
+                        AnyView(MyLandListView())
+                    }
+                    SettingsNavRow(icon: "person.3.fill", title: "従業員管理", color: .accentBlue) {
+                        AnyView(EmployeeListView())
+                    }
+                    SettingsNavRow(icon: "person.text.rectangle.fill", title: "業者管理", color: .warningOrange) {
+                        AnyView(VendorListView())
+                    }
+                    SettingsNavRow(icon: "doc.text.fill", title: "契約管理", color: .successGreen) {
+                        AnyView(ContractListView())
+                    }
+                    SettingsNavRow(icon: "chart.bar.fill", title: "分析・可視化", color: .errorRed) {
+                        AnyView(VisualizationView())
+                    }
+                    SettingsNavRow(icon: "briefcase.fill", title: "ビジネス機会", color: .textGray) {
+                        AnyView(OpportunitiesView())
+                    }
+                }
+
+                // App settings
+                Section("アプリ設定") {
+                    Toggle(isOn: $notificationsEnabled) {
+                        Label {
+                            Text("プッシュ通知")
+                        } icon: {
+                            Image(systemName: "bell.fill")
+                                .foregroundColor(.warningOrange)
+                        }
+                    }
+
+                    HStack {
+                        Label {
+                            Text("API URL")
+                        } icon: {
+                            Image(systemName: "network")
+                                .foregroundColor(.accentBlue)
+                        }
+                        Spacer()
+                        Text(AppConfig.apiBaseURL)
+                            .font(.caption)
+                            .foregroundColor(.textGray)
+                            .lineLimit(1)
+                    }
+                }
+
+                // App info
+                Section("アプリ情報") {
+                    HStack {
+                        Label("バージョン", systemImage: "info.circle.fill")
+                        Spacer()
+                        Text(AppConfig.appVersion).foregroundColor(.textGray)
+                    }
+                    HStack {
+                        Label("プラットフォーム", systemImage: "iphone")
+                        Spacer()
+                        Text("iOS").foregroundColor(.textGray)
+                    }
+                    Link(destination: URL(string: "https://arvana-terra.example.com/privacy")!) {
+                        Label("プライバシーポリシー", systemImage: "hand.raised.fill")
+                    }
+                    Link(destination: URL(string: "https://arvana-terra.example.com/terms")!) {
+                        Label("利用規約", systemImage: "doc.text.fill")
+                    }
+                }
+
+                // Logout
                 Section {
-                    Button(action: saveAreaSettings) {
+                    Button(action: { showLogoutAlert = true }) {
                         HStack {
-                            Spacer()
-                            if isSavingArea {
-                                ProgressView()
-                                    .padding(.trailing, 8)
-                            }
-                            Text("表示エリアを保存する")
-                                .fontWeight(.medium)
-                            Spacer()
+                            Image(systemName: "arrow.backward.square.fill")
+                                .foregroundColor(.errorRed)
+                            Text("ログアウト")
+                                .foregroundColor(.errorRed)
                         }
                     }
-                    .disabled(isSavingArea)
-                    .foregroundColor(.white)
-                    .listRowBackground(Color.primaryNavy)
-                }
-
-                // MARK: プロフィール設定セクション
-                Section {
-                    TextField("お名前", text: $profileName)
-                    TextField("電話番号", text: $profilePhone)
-                        .keyboardType(.phonePad)
-                    TextField("住所", text: $profileAddress)
-                } header: {
-                    Text("プロフィール編集")
-                }
-
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        PrefectureSelectorView(
-                            selected: $profilePrefecture,
-                            label: "都道府県（主要・1つ選択）",
-                            singleSelection: true
-                        )
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        PrefectureSelectorView(
-                            selected: $profilePrefectures,
-                            label: "活動エリア（複数選択可）",
-                            singleSelection: false
-                        )
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                Section {
-                    Button(action: saveProfile) {
-                        HStack {
-                            Spacer()
-                            if isSavingProfile {
-                                ProgressView()
-                                    .padding(.trailing, 8)
-                            }
-                            Text("プロフィールを保存する")
-                                .fontWeight(.medium)
-                            Spacer()
-                        }
-                    }
-                    .disabled(isSavingProfile)
-                    .foregroundColor(.white)
-                    .listRowBackground(Color.secondaryBlue)
                 }
             }
             .navigationTitle("設定")
-            .navigationBarTitleDisplayMode(.inline)
-            .alert("表示エリア設定", isPresented: $showAreaAlert) {
-                Button("OK") {}
+            .alert("ログアウト", isPresented: $showLogoutAlert) {
+                Button("キャンセル", role: .cancel) {}
+                Button("ログアウト", role: .destructive) {
+                    Task { await authVM.logout() }
+                }
             } message: {
-                Text(areaAlertMessage ?? "")
-            }
-            .alert("プロフィール", isPresented: $showProfileAlert) {
-                Button("OK") {}
-            } message: {
-                Text(profileAlertMessage ?? "")
-            }
-            .onAppear {
-                loadCurrentValues()
+                Text("ログアウトしますか？")
             }
         }
     }
 
-    // MARK: - 現在の設定をフォームに反映
-    private func loadCurrentValues() {
-        selectedMode = regionManager.displayMode
-        displayPrefectures = regionManager.displayPrefectures
-
-        if let user = authVM.currentUser {
-            profileName = user.name
-            profilePhone = user.phone ?? ""
+    func roleLabel(_ role: String) -> String {
+        switch role {
+        case "owner": return "オーナー"
+        case "manager": return "管理者"
+        case "tenant": return "テナント"
+        case "vendor": return "業者"
+        case "admin": return "管理者"
+        default: return role
         }
     }
+}
 
-    // MARK: - 表示エリア保存
-    private func saveAreaSettings() {
-        // ローカルのRegionModeManagerに即時反映
-        regionManager.displayMode = selectedMode
-        regionManager.displayPrefectures = displayPrefectures
+struct SettingsRow<Content: View>: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    let content: () -> Content
 
-        isSavingArea = true
-        Task {
-            do {
-                _ = try await APIService.shared.updateUserPreference(
-                    displayMode: selectedMode.rawValue,
-                    displayPrefectures: displayPrefectures,
-                    preferredRegions: nil
-                )
-                await MainActor.run {
-                    areaAlertMessage = "表示エリアを保存しました"
-                    showAreaAlert = true
-                    isSavingArea = false
-                }
-            } catch {
-                await MainActor.run {
-                    areaAlertMessage = error.localizedDescription
-                    showAreaAlert = true
-                    isSavingArea = false
-                }
-            }
+    var body: some View {
+        HStack {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(color.opacity(0.12))
+                .frame(width: 32, height: 32)
+                .overlay(Image(systemName: icon).font(.caption).foregroundColor(color))
+            Text(title)
+            Spacer()
         }
     }
+}
 
-    // MARK: - プロフィール保存
-    private func saveProfile() {
-        isSavingProfile = true
-        Task {
-            do {
-                let updatedUser = try await APIService.shared.updateUserProfile(
-                    name: profileName.isEmpty ? nil : profileName,
-                    phone: profilePhone.isEmpty ? nil : profilePhone,
-                    address: profileAddress.isEmpty ? nil : profileAddress,
-                    bio: nil,
-                    prefecture: profilePrefecture.first,
-                    prefectures: profilePrefectures.isEmpty ? nil : profilePrefectures
-                )
-                await MainActor.run {
-                    // AuthViewModelのユーザー情報を更新
-                    authVM.currentUser = updatedUser
-                    if let data = try? JSONEncoder().encode(updatedUser) {
-                        UserDefaults.standard.set(data, forKey: "currentUser")
-                    }
-                    profileAlertMessage = "プロフィールを保存しました"
-                    showProfileAlert = true
-                    isSavingProfile = false
-                }
-            } catch {
-                await MainActor.run {
-                    profileAlertMessage = error.localizedDescription
-                    showProfileAlert = true
-                    isSavingProfile = false
-                }
+struct SettingsNavRow: View {
+    let icon: String
+    let title: String
+    let color: Color
+    let destination: () -> AnyView
+
+    var body: some View {
+        NavigationLink(destination: destination()) {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(color.opacity(0.12))
+                    .frame(width: 32, height: 32)
+                    .overlay(Image(systemName: icon).font(.caption).foregroundColor(color))
+                Text(title)
             }
         }
     }

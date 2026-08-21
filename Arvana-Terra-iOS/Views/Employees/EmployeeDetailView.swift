@@ -1,392 +1,130 @@
 import SwiftUI
 
-// MARK: - 従業員詳細画面
 struct EmployeeDetailView: View {
     let employee: Employee
-    @ObservedObject var viewModel: EmployeeViewModel
-    @State private var showEditSheet = false
-
-    var contractLabel: String {
-        switch employee.contractType {
-        case "full_time": return "正社員"
-        case "part_time": return "パート"
-        case "contract": return "契約社員"
-        case "temp": return "派遣"
-        default: return "不明"
-        }
-    }
+    @StateObject private var vm = EmployeeViewModel()
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-
-                // MARK: ヘッダー（アバター・名前・ステータス）
-                VStack(spacing: 10) {
-                    ZStack {
+            VStack(alignment: .leading, spacing: 20) {
+                // Profile header
+                VStack(spacing: 16) {
+                    Circle()
+                        .fill(Color.accentBlue.opacity(0.15))
+                        .frame(width: 80, height: 80)
+                        .overlay(
+                            Text(String(employee.name.prefix(1)))
+                                .font(.largeTitle).fontWeight(.bold).foregroundColor(.primaryNavy)
+                        )
+                    Text(employee.name).font(.title2).fontWeight(.bold).foregroundColor(.textDark)
+                    if let dept = employee.department, let pos = employee.position {
+                        Text("\(dept) · \(pos)").font(.subheadline).foregroundColor(.textGray)
+                    }
+                    HStack(spacing: 8) {
                         Circle()
-                            .fill(employee.isActive ? Color.primaryNavy.opacity(0.15) : Color.borderGray.opacity(0.4))
-                            .frame(width: 72, height: 72)
-                        Text(String(employee.name.prefix(1)))
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(employee.isActive ? Color.primaryNavy : Color.textGray)
-                    }
-                    Text(employee.name)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(Color.textDark)
-
-                    HStack(spacing: 8) {
-                        if let dept = employee.department {
-                            Text(dept)
-                                .font(.subheadline)
-                                .foregroundColor(Color.textGray)
-                        }
-                        if let role = employee.role {
-                            Text(role)
-                                .font(.subheadline)
-                                .foregroundColor(Color.textGray)
-                        }
-                    }
-
-                    HStack(spacing: 8) {
-                        if employee.contractType != nil {
-                            Text(contractLabel)
-                                .font(.caption)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(Color.primaryNavy.opacity(0.12))
-                                .foregroundColor(Color.primaryNavy)
-                                .cornerRadius(12)
-                        }
-                        Text(employee.isActive ? "在職中" : "退職済み")
-                            .font(.caption)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(employee.isActive ? Color.successGreen.opacity(0.12) : Color.errorRed.opacity(0.12))
-                            .foregroundColor(employee.isActive ? Color.successGreen : Color.errorRed)
-                            .cornerRadius(12)
+                            .fill(employee.status == "active" ? Color.successGreen : Color.textGray)
+                            .frame(width: 8, height: 8)
+                        Text(employee.status == "active" ? "在籍中" : "退職")
+                            .font(.caption).foregroundColor(.textGray)
                     }
                 }
-                .padding(.top, 8)
-                .padding(.horizontal)
+                .frame(maxWidth: .infinity)
+                .padding(20)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                // MARK: 連絡先情報カード
-                InfoCardView(title: "連絡先") {
-                    if let email = employee.email {
-                        InfoRowView(icon: "envelope", label: "メールアドレス", value: email)
+                // Contact info
+                VStack(spacing: 12) {
+                    DetailRow(label: "メール", value: employee.email, icon: "envelope.fill")
+                    if let phone = employee.phoneNumber {
+                        DetailRow(label: "電話", value: phone, icon: "phone.fill")
                     }
-                    if let phone = employee.phone {
-                        InfoRowView(icon: "phone", label: "電話番号", value: phone)
+                    if let type = employee.employmentType {
+                        DetailRow(label: "雇用形態", value: vm.employmentTypeLabel(type), icon: "briefcase.fill")
                     }
-                    if let address = employee.address {
-                        InfoRowView(icon: "location", label: "住所", value: address)
-                    }
-                    if employee.email == nil && employee.phone == nil && employee.address == nil {
-                        Text("連絡先情報が登録されていません")
-                            .font(.subheadline)
-                            .foregroundColor(Color.textGray)
-                            .padding(.vertical, 4)
+                    if let start = employee.startDate {
+                        DetailRow(label: "入社日", value: formatDate(start), icon: "calendar")
                     }
                 }
-                .padding(.horizontal)
+                .padding(16)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                // MARK: 雇用情報カード
-                InfoCardView(title: "雇用情報") {
-                    if let hireDate = employee.hireDate {
-                        InfoRowView(icon: "calendar", label: "入社日", value: hireDate)
-                    }
-                    if employee.contractType != nil {
-                        InfoRowView(icon: "briefcase", label: "雇用形態", value: contractLabel)
-                    }
+                // Chat button
+                NavigationLink {
+                    EmployeeChatView(employee: employee)
+                } label: {
+                    Label("メッセージを送る", systemImage: "message.fill")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.primaryNavy)
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .padding(.horizontal)
 
-                // MARK: マイナンバーカード
-                MyNumberView(mynumber: employee.mynumber, verified: employee.mynumberVerified)
-                    .padding(.horizontal)
-
-                // MARK: 備考カード
                 if let notes = employee.notes, !notes.isEmpty {
-                    InfoCardView(title: "備考") {
-                        Text(notes)
-                            .font(.subheadline)
-                            .foregroundColor(Color.textDark)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("備考").font(.subheadline).fontWeight(.semibold).foregroundColor(.textGray)
+                        Text(notes).font(.body).foregroundColor(.textDark)
                     }
-                    .padding(.horizontal)
+                    .padding(16)
+                    .background(Color.surfaceWhite)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-
-                // MARK: チャットリンク
-                InfoCardView(title: "コミュニケーション") {
-                    NavigationLink(destination: ChatListView(type: "employee", targetId: employee.id, targetName: employee.name)) {
-                        Label("チャット", systemImage: "bubble.left.and.bubble.right")
-                            .foregroundColor(Color.primaryNavy)
-                    }
-                }
-                .padding(.horizontal)
-
-                // MARK: メタ情報
-                InfoCardView(title: "登録情報") {
-                    InfoRowView(icon: "clock", label: "登録日時", value: formatDate(employee.createdAt))
-                    InfoRowView(icon: "pencil", label: "更新日時", value: formatDate(employee.updatedAt))
-                }
-                .padding(.horizontal)
-
-                Spacer(minLength: 32)
             }
+            .padding(16)
         }
+        .background(Color.backgroundGray)
         .navigationTitle("従業員詳細")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("編集") { showEditSheet = true }
-            }
-        }
-        .sheet(isPresented: $showEditSheet) {
-            EmployeeEditView(employee: employee, viewModel: viewModel)
-        }
     }
 
-    private func formatDate(_ dateStr: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: dateStr) {
-            let display = DateFormatter()
-            display.dateStyle = .medium
-            display.timeStyle = .short
-            display.locale = Locale(identifier: "ja_JP")
-            return display.string(from: date)
-        }
-        return dateStr
+    func formatDate(_ dateString: String) -> String {
+        let fmt = ISO8601DateFormatter()
+        guard let date = fmt.date(from: dateString) else { return dateString }
+        let f = DateFormatter()
+        f.dateFormat = "yyyy年M月d日"
+        f.locale = Locale(identifier: "ja_JP")
+        return f.string(from: date)
     }
 }
 
-// MARK: - マイナンバー表示コンポーネント
-struct MyNumberView: View {
-    let mynumber: String?
-    let verified: Bool
-    @State private var isRevealed = false
-
-    var formatted: String? {
-        guard let m = mynumber else { return nil }
-        let digits = m.filter(\.isNumber)
-        guard digits.count == 12 else { return m }
-        let a = digits.prefix(4)
-        let b = digits.dropFirst(4).prefix(4)
-        let c = digits.dropFirst(8)
-        return "\(a)-\(b)-\(c)"
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("マイナンバー")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(Color.textDark)
-                Spacer()
-                if verified {
-                    Label("確認済み", systemImage: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundColor(Color.successGreen)
-                } else {
-                    Label("未確認", systemImage: "circle")
-                        .font(.caption)
-                        .foregroundColor(Color.textGray)
-                }
-            }
-
-            if let formatted {
-                HStack {
-                    Text(isRevealed ? formatted : "****-****-****")
-                        .font(.system(.body, design: .monospaced))
-                        .fontWeight(.medium)
-                        .foregroundColor(Color.textDark)
-                    Spacer()
-                    Button(isRevealed ? "隠す" : "表示") {
-                        isRevealed.toggle()
-                    }
-                    .font(.caption)
-                    .foregroundColor(Color.primaryNavy)
-                }
-            } else {
-                Text("未登録")
-                    .foregroundColor(Color.textGray)
-                    .font(.subheadline)
-            }
-        }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
-    }
-}
-
-// MARK: - 情報カードコンポーネント
-struct InfoCardView<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(Color.textGray)
-            content
-        }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
-    }
-}
-
-// MARK: - 情報行コンポーネント
-struct InfoRowView: View {
-    let icon: String
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon)
-                .font(.subheadline)
-                .foregroundColor(Color.primaryNavy)
-                .frame(width: 20)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.caption)
-                    .foregroundColor(Color.textGray)
-                Text(value)
-                    .font(.subheadline)
-                    .foregroundColor(Color.textDark)
-            }
-            Spacer()
-        }
-    }
-}
-
-// MARK: - 従業員編集画面
-struct EmployeeEditView: View {
+struct EmployeeChatView: View {
     let employee: Employee
-    @ObservedObject var viewModel: EmployeeViewModel
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var name: String
-    @State private var email: String
-    @State private var phone: String
-    @State private var address: String
-    @State private var role: String
-    @State private var department: String
-    @State private var hireDate: String
-    @State private var contractType: String
-    @State private var notes: String
-    @State private var isActive: Bool
-
-    let contractTypes = [
-        ("full_time", "正社員"),
-        ("part_time", "パート"),
-        ("contract", "契約社員"),
-        ("temp", "派遣")
-    ]
-
-    init(employee: Employee, viewModel: EmployeeViewModel) {
-        self.employee = employee
-        self.viewModel = viewModel
-        _name = State(initialValue: employee.name)
-        _email = State(initialValue: employee.email ?? "")
-        _phone = State(initialValue: employee.phone ?? "")
-        _address = State(initialValue: employee.address ?? "")
-        _role = State(initialValue: employee.role ?? "")
-        _department = State(initialValue: employee.department ?? "")
-        _hireDate = State(initialValue: employee.hireDate ?? "")
-        _contractType = State(initialValue: employee.contractType ?? "full_time")
-        _notes = State(initialValue: employee.notes ?? "")
-        _isActive = State(initialValue: employee.isActive)
-    }
+    @StateObject private var vm = ChatViewModel()
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("基本情報") {
-                    TextField("氏名（必須）", text: $name)
-                    TextField("メールアドレス", text: $email)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                    TextField("電話番号", text: $phone)
-                        .keyboardType(.phonePad)
-                    TextField("住所", text: $address)
-                }
-
-                Section("所属・役職") {
-                    TextField("部署", text: $department)
-                    TextField("役職", text: $role)
-                }
-
-                Section("雇用情報") {
-                    Picker("雇用形態", selection: $contractType) {
-                        ForEach(contractTypes, id: \.0) { type in
-                            Text(type.1).tag(type.0)
+        Group {
+            if let roomId = vm.chatRooms.first?.id {
+                ChatRoomView(chatRoom: vm.chatRooms.first!)
+            } else {
+                VStack(spacing: 20) {
+                    Image(systemName: "message.fill")
+                        .font(.system(size: 56))
+                        .foregroundColor(.accentBlue.opacity(0.5))
+                    Text("チャットを開始するには\nチャットルームを作成してください")
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.textGray)
+                    Button("チャットルームを作成") {
+                        Task {
+                            await vm.createChatRoom(
+                                name: "\(employee.name)とのチャット",
+                                roomType: "employee",
+                                propertyId: nil, landId: nil,
+                                participantIds: employee.userId.map { [$0] } ?? []
+                            )
                         }
                     }
-                    TextField("入社日（例: 2024-04-01）", text: $hireDate)
-                    Toggle("在職中", isOn: $isActive)
-                }
-
-                Section("備考") {
-                    TextField("メモ・備考", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-
-                Section {
-                    Button(action: updateEmployee) {
-                        HStack {
-                            Spacer()
-                            if viewModel.isSaving {
-                                ProgressView()
-                                    .padding(.trailing, 8)
-                            }
-                            Text("変更を保存する")
-                                .fontWeight(.medium)
-                            Spacer()
-                        }
-                    }
-                    .disabled(name.isEmpty || viewModel.isSaving)
+                    .padding()
+                    .background(Color.primaryNavy)
                     .foregroundColor(.white)
-                    .listRowBackground(name.isEmpty ? Color.borderGray : Color.primaryNavy)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-            }
-            .navigationTitle("従業員を編集")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("キャンセル") { dismiss() }
-                }
-            }
-            .alert("エラー", isPresented: $viewModel.showError) {
-                Button("OK") {}
-            } message: {
-                Text(viewModel.errorMessage ?? "エラーが発生しました")
+                .padding()
             }
         }
-    }
-
-    private func updateEmployee() {
-        var data: [String: Any] = ["name": name, "isActive": isActive]
-        if !email.isEmpty { data["email"] = email }
-        if !phone.isEmpty { data["phone"] = phone }
-        if !address.isEmpty { data["address"] = address }
-        if !role.isEmpty { data["role"] = role }
-        if !department.isEmpty { data["department"] = department }
-        if !hireDate.isEmpty { data["hireDate"] = hireDate }
-        data["contractType"] = contractType
-        if !notes.isEmpty { data["notes"] = notes }
-
-        Task {
-            await viewModel.updateEmployee(id: employee.id, data: data)
-            if !viewModel.showError {
-                dismiss()
-            }
-        }
+        .navigationTitle("\(employee.name)")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await vm.fetchChatRooms() }
     }
 }

@@ -1,88 +1,116 @@
 import Foundation
 import SwiftUI
-import PhotosUI
 
 @MainActor
 class LandViewModel: ObservableObject {
     @Published var publicLands: [Land] = []
     @Published var myLands: [Land] = []
+    @Published var selectedLand: Land?
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    // Create / Edit fields
-    @Published var name = ""
-    @Published var address = ""
-    @Published var description = ""
-    @Published var price = ""
-    @Published var selectedImages: [UIImage] = []
-    @Published var isSubmitting = false
-    @Published var isSuccess = false
+    private let apiService = APIService.shared
 
-    func loadPublicLands() async {
+    func fetchPublicLands() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
         do {
-            publicLands = try await APIService.shared.getPublicLands()
+            publicLands = try await apiService.getPublicLands()
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
         } catch {
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
-    func loadMyLands() async {
+    func fetchMyLands() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
         do {
-            myLands = try await APIService.shared.getMyLands()
+            myLands = try await apiService.getMyLands()
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
         } catch {
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
-    func createLand() async {
-        guard !name.isEmpty, !address.isEmpty else {
-            errorMessage = "土地名と住所は必須です"
-            return
-        }
-        isSubmitting = true
+    func fetchLandById(_ id: String) async {
+        isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
         do {
-            let imageData = selectedImages.compactMap { image -> (Data, String)? in
-                guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
-                return (data, "image/jpeg")
-            }
-            let created = try await APIService.shared.createLand(
-                name: name,
-                address: address,
-                description: description.isEmpty ? nil : description,
-                price: Double(price),
-                imageData: imageData
+            selectedLand = try await apiService.getLandById(id)
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func createLand(name: String, address: String, area: Double, zoning: String?, status: String, isPublic: Bool, purchasePrice: Double?, notes: String?) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            let request = CreateLandRequest(
+                name: name, address: address, area: area,
+                zoning: zoning, status: status, isPublic: isPublic,
+                purchasePrice: purchasePrice, notes: notes
             )
-            myLands.insert(created, at: 0)
-            isSuccess = true
+            let newLand = try await apiService.createLand(request)
+            myLands.insert(newLand, at: 0)
+            return true
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+            return false
         } catch {
             errorMessage = error.localizedDescription
-        }
-        isSubmitting = false
-    }
-
-    func deleteLand(_ id: String) async {
-        do {
-            try await APIService.shared.deleteLand(id)
-            myLands.removeAll { $0.id == id }
-        } catch {
-            errorMessage = error.localizedDescription
+            return false
         }
     }
 
-    func resetForm() {
-        name = ""
-        address = ""
-        description = ""
-        price = ""
-        selectedImages = []
-        isSuccess = false
+    func updateLand(_ id: String, name: String?, address: String?, status: String?, isPublic: Bool?, currentValue: Double?, notes: String?) async -> Bool {
+        isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
+        do {
+            let request = UpdateLandRequest(
+                name: name, address: address, area: nil,
+                zoning: nil, status: status, isPublic: isPublic,
+                currentValue: currentValue, notes: notes
+            )
+            let updated = try await apiService.updateLand(id, request)
+            if let idx = myLands.firstIndex(where: { $0.id == id }) {
+                myLands[idx] = updated
+            }
+            selectedLand = updated
+            return true
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+            return false
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    func deleteLand(_ id: String) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            try await apiService.deleteLand(id)
+            myLands.removeAll { $0.id == id }
+            return true
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+            return false
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
 }

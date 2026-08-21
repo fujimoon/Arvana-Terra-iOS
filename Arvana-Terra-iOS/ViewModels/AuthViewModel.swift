@@ -3,88 +3,85 @@ import SwiftUI
 
 @MainActor
 class AuthViewModel: ObservableObject {
+    @Published var isAuthenticated = false
     @Published var currentUser: User?
-    @Published var isLoggedIn = false
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    // Login fields
-    @Published var loginEmail = ""
-    @Published var loginPassword = ""
+    private let apiService = APIService.shared
+    private let socketService = SocketService.shared
 
-    // Register fields
-    @Published var registerName = ""
-    @Published var registerEmail = ""
-    @Published var registerPassword = ""
-    @Published var registerPhone = ""
-    @Published var registerRole = "homeowner"
-
-    init() {
-        // Check for persisted token
-        if APIService.shared.isAuthenticated {
-            isLoggedIn = true
-            // Restore user info if saved
-            if let data = UserDefaults.standard.data(forKey: "currentUser"),
-               let user = try? JSONDecoder().decode(User.self, from: data) {
-                currentUser = user
+    func checkAuthStatus() {
+        isAuthenticated = apiService.isAuthenticated
+        if isAuthenticated {
+            Task {
+                await fetchCurrentUser()
             }
         }
     }
 
-    func login() async {
-        guard !loginEmail.isEmpty, !loginPassword.isEmpty else {
-            errorMessage = "メールアドレスとパスワードを入力してください"
-            return
-        }
+    func login(email: String, password: String) async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
+
         do {
-            let response = try await APIService.shared.login(email: loginEmail, password: loginPassword)
-            APIService.shared.setToken(response.token)
-            currentUser = response.user
-            if let data = try? JSONEncoder().encode(response.user) {
-                UserDefaults.standard.set(data, forKey: "currentUser")
+            let authResponse = try await apiService.login(email: email, password: password)
+            currentUser = authResponse.user
+            isAuthenticated = true
+
+            if let token = UserDefaults.standard.string(forKey: "accessToken") {
+                socketService.connect(token: token)
             }
-            isLoggedIn = true
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
         } catch {
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
-    func register() async {
-        guard !registerName.isEmpty, !registerEmail.isEmpty, registerPassword.count >= 8 else {
-            errorMessage = "全ての必須項目を入力してください（パスワードは8文字以上）"
-            return
-        }
+    func register(email: String, password: String, name: String, role: String? = nil, companyName: String? = nil, phoneNumber: String? = nil) async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
+
         do {
-            let response = try await APIService.shared.register(
-                email: registerEmail,
-                password: registerPassword,
-                name: registerName,
-                phone: registerPhone.isEmpty ? nil : registerPhone,
-                role: registerRole
+            let authResponse = try await apiService.register(
+                email: email,
+                password: password,
+                name: name,
+                role: role,
+                companyName: companyName,
+                phoneNumber: phoneNumber
             )
-            APIService.shared.setToken(response.token)
-            currentUser = response.user
-            if let data = try? JSONEncoder().encode(response.user) {
-                UserDefaults.standard.set(data, forKey: "currentUser")
+            currentUser = authResponse.user
+            isAuthenticated = true
+
+            if let token = UserDefaults.standard.string(forKey: "accessToken") {
+                socketService.connect(token: token)
             }
-            isLoggedIn = true
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
         } catch {
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
-    func logout() {
-        APIService.shared.clearToken()
-        UserDefaults.standard.removeObject(forKey: "currentUser")
+    func logout() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        socketService.disconnect()
+        try? await apiService.logout()
         currentUser = nil
-        isLoggedIn = false
-        loginEmail = ""
-        loginPassword = ""
+        isAuthenticated = false
+    }
+
+    private func fetchCurrentUser() async {
+        do {
+            currentUser = try await apiService.getCurrentUser()
+        } catch {
+            print("AuthViewModel: Failed to fetch current user - \(error.localizedDescription)")
+        }
     }
 }

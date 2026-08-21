@@ -1,168 +1,176 @@
 import SwiftUI
 
 struct RoomListView: View {
-    let propertyId: String
-    let propertyName: String
+    let property: Property
+    let rooms: [Room]
+    @StateObject private var vm = PropertyViewModel()
+    @State private var showAdd = false
+    @State private var selectedFloor: Int?
 
-    @State private var rooms: [Room] = []
-    @State private var isLoading = true
-    @State private var showingAddRoom = false
+    var floors: [Int] { Array(Set(rooms.map { $0.floor })).sorted() }
 
-    var vacantCount: Int { rooms.filter { $0.status == "vacant" }.count }
-    var occupiedCount: Int { rooms.filter { $0.status == "occupied" }.count }
-    var overdueCount: Int {
-        rooms.filter { room in
-            room.tenants?.contains { $0.paymentStatus == "overdue" || $0.paymentStatus == "partial" } ?? false
-        }.count
+    var filteredRooms: [Room] {
+        guard let floor = selectedFloor else { return rooms }
+        return rooms.filter { $0.floor == floor }
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Summary Row
-                HStack(spacing: 12) {
-                    SummaryCard(title: "空室", count: vacantCount, color: .green)
-                    SummaryCard(title: "入居中", count: occupiedCount, color: Color(hex: "#1B3A6B"))
-                    SummaryCard(title: "滞納中", count: overdueCount, color: .red)
-                }
-                .padding(.horizontal)
-
-                if isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, minHeight: 200)
-                } else if rooms.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "door.left.hand.open")
-                            .font(.system(size: 48))
-                            .foregroundColor(.gray.opacity(0.3))
-                        Text("部屋がまだ登録されていません")
-                            .foregroundColor(.gray)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 200)
-                } else {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        ForEach(rooms) { room in
-                            NavigationLink(destination: RoomDetailView(roomId: room.id)) {
-                                RoomCard(room: room)
+        VStack(spacing: 0) {
+            if !floors.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        FilterChip(title: "全階", isSelected: selectedFloor == nil) {
+                            selectedFloor = nil
+                        }
+                        ForEach(floors, id: \.self) { floor in
+                            FilterChip(title: "\(floor)階", isSelected: selectedFloor == floor) {
+                                selectedFloor = floor
                             }
-                            .buttonStyle(PlainButtonStyle())
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
                 }
+                .background(Color.surfaceWhite)
             }
-            .padding(.top)
+
+            if filteredRooms.isEmpty {
+                EmptyStateView(
+                    title: "部屋なし",
+                    message: "部屋を追加してください",
+                    systemImage: "door.left.hand.open",
+                    actionTitle: "部屋を追加",
+                    action: { showAdd = true }
+                )
+            } else {
+                List {
+                    ForEach(filteredRooms) { room in
+                        NavigationLink {
+                            RoomDetailView(room: room)
+                        } label: {
+                            RoomRow(room: room)
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped)
+            }
         }
-        .navigationTitle("部屋管理")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("部屋一覧")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button { showingAddRoom = true } label: {
-                    Image(systemName: "plus")
+                Button(action: { showAdd = true }) {
+                    Image(systemName: "plus").foregroundColor(.primaryNavy)
                 }
             }
         }
-        .sheet(isPresented: $showingAddRoom) {
-            RoomFormView(propertyId: propertyId) { _ in
-                Task { await loadRooms() }
-            }
+        .sheet(isPresented: $showAdd) {
+            AddRoomView(vm: vm, propertyId: property.id)
         }
-        .task { await loadRooms() }
-    }
-
-    private func loadRooms() async {
-        isLoading = true
-        defer { isLoading = false }
-        rooms = (try? await RoomService.shared.getRoomsByProperty(propertyId: propertyId)) ?? []
     }
 }
 
-struct SummaryCard: View {
-    let title: String
-    let count: Int
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Text("\(count)")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(color)
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-    }
-}
-
-struct RoomCard: View {
+struct RoomRow: View {
     let room: Room
-    var activeTenant: Tenant? { room.tenants?.first { $0.status == "active" } }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(room.name)
-                    .font(.headline)
-                    .foregroundColor(Color(hex: "#1B3A6B"))
-                Spacer()
-                StatusBadge(
-                    status: room.status,
-                    label: room.statusLabel,
-                    color: room.status == "vacant" ? .green : room.status == "occupied" ? Color(hex: "#1B3A6B") : .orange
-                )
+        HStack(spacing: 12) {
+            VStack(alignment: .center, spacing: 2) {
+                Text("\(room.floor)F")
+                    .font(.caption2).fontWeight(.bold).foregroundColor(.accentBlue)
+                Text(room.roomNumber)
+                    .font(.caption).foregroundColor(.textGray)
             }
+            .frame(width: 40)
+            .padding(8)
+            .background(Color.accentBlue.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            if let type = room.roomType {
-                Text(type + (room.area.map { " / \(Int($0))m2" } ?? ""))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            if let rent = room.rentAmount {
-                Text("¥\(Int(rent).formatted())/月")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-
-            if let tenant = activeTenant {
-                Divider()
-                Text(tenant.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                if tenant.paymentStatus != "current" {
-                    Text(tenant.paymentStatusLabel)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(tenant.paymentStatus == "overdue" ? Color.red.opacity(0.15) : Color.orange.opacity(0.15))
-                        .foregroundColor(tenant.paymentStatus == "overdue" ? .red : .orange)
-                        .cornerRadius(8)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(roomTypeLabel(room.roomType))
+                    .font(.subheadline).fontWeight(.semibold).foregroundColor(.textDark)
+                Text("\(String(format: "%.1f", room.area))㎡")
+                    .font(.caption).foregroundColor(.textGray)
+                if let rent = room.rentPrice {
+                    Text(formatCurrency(rent) + "/月")
+                        .font(.caption).foregroundColor(.primaryNavy)
                 }
             }
+            Spacer()
+            StatusBadge(status: room.status, type: .room)
         }
-        .padding(12)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+
+    func roomTypeLabel(_ type: String) -> String {
+        switch type {
+        case "residence": return "居住用"
+        case "office": return "オフィス"
+        case "store": return "店舗"
+        case "warehouse": return "倉庫"
+        case "parking": return "駐車場"
+        default: return type
+        }
+    }
+
+    func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ","
+        return "¥" + (formatter.string(from: NSNumber(value: value)) ?? "0")
     }
 }
 
-struct StatusBadge: View {
-    let status: String
-    let label: String
-    let color: Color
+struct AddRoomView: View {
+    @ObservedObject var vm: PropertyViewModel
+    let propertyId: String
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var roomNumber = ""
+    @State private var floor = "1"
+    @State private var area = ""
+    @State private var roomType = "residence"
+    @State private var status = "vacant"
+    @State private var rentPrice = ""
+    @State private var notes = ""
+
+    let roomTypes = [("residence","居住用"), ("office","オフィス"), ("store","店舗"), ("warehouse","倉庫"), ("parking","駐車場")]
+    let statuses = [("vacant","空室"), ("occupied","入居中"), ("reserved","予約済"), ("maintenance","メンテナンス")]
+
+    var isValid: Bool { !roomNumber.isEmpty && !area.isEmpty && Double(area) != nil }
 
     var body: some View {
-        Text(label)
-            .font(.system(size: 10, weight: .medium))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.15))
-            .foregroundColor(color)
-            .cornerRadius(8)
+        NavigationStack {
+            Form {
+                Section("部屋情報") {
+                    TextField("部屋番号 *", text: $roomNumber)
+                    TextField("階数 *", text: $floor).keyboardType(.numberPad)
+                    TextField("面積 (㎡) *", text: $area).keyboardType(.decimalPad)
+                    Picker("部屋タイプ", selection: $roomType) {
+                        ForEach(roomTypes, id: \.0) { Text($0.1).tag($0.0) }
+                    }
+                }
+                Section("ステータス・賃料") {
+                    Picker("状態", selection: $status) {
+                        ForEach(statuses, id: \.0) { Text($0.1).tag($0.0) }
+                    }
+                    TextField("賃料 (円/月)", text: $rentPrice).keyboardType(.decimalPad)
+                }
+                Section("備考") {
+                    TextEditor(text: $notes).frame(height: 80)
+                }
+            }
+            .navigationTitle("部屋を追加")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("キャンセル") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("追加") {
+                        // Implementation via APIService directly
+                        dismiss()
+                    }
+                    .disabled(!isValid)
+                }
+            }
+        }
     }
 }

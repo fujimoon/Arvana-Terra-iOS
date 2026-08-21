@@ -2,140 +2,113 @@ import SwiftUI
 
 struct PublicPropertyDetailView: View {
     let property: Property
-    @State private var showingInquiry = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Image gallery
-                if !property.imageUrls.isEmpty {
-                    TabView {
-                        ForEach(property.imageUrls, id: \.self) { urlStr in
-                            if let url = URL(string: urlStr) {
-                                AsyncImage(url: url) { img in
-                                    img.resizable().aspectRatio(contentMode: .fill)
-                                } placeholder: {
-                                    Color.borderGray
-                                }
-                                .clipped()
-                            }
-                        }
-                    }
-                    .tabViewStyle(.page)
-                    .frame(height: 260)
-                } else {
-                    Rectangle()
-                        .fill(Color.borderGray)
-                        .frame(height: 200)
-                        .overlay(
-                            Image(systemName: "house.fill")
-                                .font(.system(size: 48))
-                                .foregroundColor(Color.textGray)
-                        )
-                }
+                // Images
+                ThumbnailImageView(url: property.thumbnailUrl, height: 250)
 
-                VStack(alignment: .leading, spacing: 16) {
-                    // Title & price
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(property.name)
-                            .font(.title2).fontWeight(.bold)
-                            .foregroundColor(Color.textDark)
-                        Text(property.address)
-                            .font(.subheadline)
-                            .foregroundColor(Color.textGray)
-                        if let price = property.price {
-                            Text("\(Int(price / 10000))万円")
-                                .font(.title3).fontWeight(.bold)
-                                .foregroundColor(Color.primaryNavy)
-                                .padding(.top, 4)
-                        }
-                    }
-
-                    Divider()
-
-                    // Status badge
+                VStack(alignment: .leading, spacing: 20) {
+                    // Title and status
                     HStack {
-                        Text("状態")
-                            .font(.subheadline)
-                            .foregroundColor(Color.textGray)
+                        Text(property.name)
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.textDark)
                         Spacer()
-                        StatusBadge(status: property.status)
+                        StatusBadge(status: property.status, type: .property)
+                    }
+
+                    // Address
+                    Label(property.address, systemImage: "mappin.and.ellipse")
+                        .font(.subheadline)
+                        .foregroundColor(.textGray)
+
+                    Divider()
+
+                    // Property details grid
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                        PropertyDetailItem(label: "建物種別", value: buildingTypeLabel(property.buildingType), icon: "building.2")
+                        PropertyDetailItem(label: "延床面積", value: "\(String(format: "%.1f", property.area))㎡", icon: "square.dashed")
+                        PropertyDetailItem(label: "階数", value: "\(property.floors)階建て", icon: "stairs")
+                        PropertyDetailItem(label: "総部屋数", value: "\(property.totalRooms)室", icon: "door.left.hand.open")
                     }
 
                     Divider()
 
-                    // Description
-                    if let desc = property.description, !desc.isEmpty {
+                    // Valuation
+                    if let value = property.currentValue {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("物件詳細")
-                                .font(.headline)
-                                .foregroundColor(Color.textDark)
-                            Text(desc)
-                                .font(.body)
-                                .foregroundColor(Color.textGray)
+                            Text("資産評価額")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.textGray)
+                            Text(formatCurrency(value))
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primaryNavy)
                         }
                         Divider()
                     }
 
-                    // Inquiry button
-                    Button {
-                        showingInquiry = true
-                    } label: {
-                        Text("購入・相談のお問い合わせ")
-                            .fontWeight(.semibold)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.primaryNavy)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                    .sheet(isPresented: $showingInquiry) {
-                        PropertyInquiryView(propertyId: property.id, propertyName: property.name)
+                    // Notes
+                    if let notes = property.notes, !notes.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("備考")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.textGray)
+                            Text(notes)
+                                .font(.body)
+                                .foregroundColor(.textDark)
+                        }
                     }
                 }
-                .padding()
+                .padding(20)
             }
         }
-        .navigationTitle(property.name)
+        .background(Color.backgroundGray)
+        .navigationTitle("物件詳細")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func buildingTypeLabel(_ type: String) -> String {
+        switch type {
+        case "apartment": return "マンション"
+        case "house": return "一戸建て"
+        case "office": return "オフィス"
+        case "commercial": return "商業施設"
+        case "warehouse": return "倉庫"
+        default: return type
+        }
+    }
+
+    private func formatCurrency(_ value: Double) -> String {
+        if value >= 100_000_000 { return String(format: "%.1f億円", value / 100_000_000) }
+        if value >= 10_000 { return String(format: "%.0f万円", value / 10_000) }
+        return "¥\(Int(value))"
     }
 }
 
-struct StatusBadge: View {
-    let status: String
-
-    var label: String {
-        switch status {
-        case "draft": return "下書き"
-        case "for_sale": return "売り出し中"
-        case "sold": return "売却済"
-        case "pending": return "審査中"
-        case "approved": return "承認済"
-        case "rejected": return "否認"
-        case "replied": return "返信済"
-        case "closed": return "クローズ"
-        default: return status
-        }
-    }
-
-    var color: Color {
-        switch status {
-        case "for_sale", "approved": return Color.successGreen
-        case "sold", "closed": return Color.textGray
-        case "draft", "pending": return Color.warningOrange
-        case "rejected": return Color.errorRed
-        case "replied": return Color.accentBlue
-        default: return Color.textGray
-        }
-    }
+struct PropertyDetailItem: View {
+    let label: String
+    let value: String
+    let icon: String
 
     var body: some View {
-        Text(label)
-            .font(.caption).fontWeight(.medium)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(color.opacity(0.15))
-            .foregroundColor(color)
-            .cornerRadius(8)
+        VStack(alignment: .leading, spacing: 6) {
+            Label(label, systemImage: icon)
+                .font(.caption)
+                .foregroundColor(.textGray)
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.textDark)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.backgroundGray)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

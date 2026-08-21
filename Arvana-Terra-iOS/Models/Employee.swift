@@ -2,19 +2,36 @@ import Foundation
 
 struct Employee: Codable, Identifiable {
     let id: String
-    let ownerId: String
-    var name: String
-    var email: String?
-    var phone: String?
-    var address: String?
-    var role: String?
-    var department: String?
-    var hireDate: String?
-    var contractType: String? // "full_time", "part_time", "contract", "temp"
-    var mynumber: String?     // バックエンドで複号済み・マスク表示
-    var mynumberVerified: Bool
-    var notes: String?
-    var isActive: Bool
+    let userId: String?
+    let name: String
+    let email: String
+    let phoneNumber: String?
+    let department: String?
+    let position: String?
+    let employmentType: String?
+    let startDate: String?
+    let salary: Double?
+    let status: String
+    let avatarUrl: String?
+    let notes: String?
     let createdAt: String
     let updatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId
+        case name
+        case email
+        case phoneNumber
+        case department
+        case position
+        case employmentType
+        case startDate
+        case salary
+        case status
+        case avatarUrl
+        case notes
+        case createdAt
+        case updatedAt
+    }
 }

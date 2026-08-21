@@ -2,120 +2,164 @@ import SwiftUI
 
 struct PropertyManageView: View {
     let property: Property
-    @ObservedObject var viewModel: PropertyViewModel
-    @State private var showingSaleRequest = false
-    @Environment(\.dismiss) var dismiss
+    @StateObject private var propertyVM = PropertyViewModel()
+    @StateObject private var equipVM = EquipmentViewModel()
+    @StateObject private var taskVM = TaskViewModel()
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Image gallery
-                if !property.imageUrls.isEmpty {
-                    TabView {
-                        ForEach(property.imageUrls, id: \.self) { urlStr in
-                            if let url = URL(string: urlStr) {
-                                AsyncImage(url: url) { img in
-                                    img.resizable().aspectRatio(contentMode: .fill)
-                                } placeholder: {
-                                    Color.borderGray
-                                }
-                                .clipped()
+            VStack(spacing: 20) {
+                // Property summary header
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(property.name)
+                            .font(.headline)
+                            .foregroundColor(.textDark)
+                        Text(property.address)
+                            .font(.caption)
+                            .foregroundColor(.textGray)
+                    }
+                    Spacer()
+                    StatusBadge(status: property.status, type: .property)
+                }
+                .padding(16)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                // Rooms section
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("部屋管理")
+                            .font(.headline)
+                            .foregroundColor(.textDark)
+                        Spacer()
+                        NavigationLink("詳細") {
+                            RoomListView(property: property, rooms: propertyVM.rooms)
+                        }
+                        .font(.caption)
+                        .foregroundColor(.accentBlue)
+                    }
+
+                    HStack(spacing: 12) {
+                        RoomStatBadge(
+                            count: propertyVM.rooms.filter { $0.status == "occupied" }.count,
+                            label: "入居中",
+                            color: .successGreen
+                        )
+                        RoomStatBadge(
+                            count: propertyVM.rooms.filter { $0.status == "vacant" }.count,
+                            label: "空室",
+                            color: .accentBlue
+                        )
+                        RoomStatBadge(
+                            count: propertyVM.rooms.filter { $0.status == "maintenance" }.count,
+                            label: "メンテ",
+                            color: .warningOrange
+                        )
+                    }
+                }
+                .padding(16)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                // Equipment section
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("設備管理")
+                            .font(.headline)
+                            .foregroundColor(.textDark)
+                        Spacer()
+                        NavigationLink("詳細") {
+                            EquipmentManageView(property: property)
+                        }
+                        .font(.caption)
+                        .foregroundColor(.accentBlue)
+                    }
+
+                    if equipVM.equipmentList.isEmpty {
+                        Text("設備が登録されていません")
+                            .font(.caption)
+                            .foregroundColor(.textGray)
+                    } else {
+                        ForEach(equipVM.equipmentList.prefix(3)) { equip in
+                            HStack {
+                                Circle()
+                                    .fill(equipVM.statusColor(for: equip.status).opacity(0.15))
+                                    .frame(width: 8, height: 8)
+                                    .overlay(Circle().fill(equipVM.statusColor(for: equip.status)).frame(width: 8, height: 8))
+                                Text(equip.name)
+                                    .font(.subheadline)
+                                    .foregroundColor(.textDark)
+                                Spacer()
+                                StatusBadge(status: equip.status, type: .equipment)
                             }
                         }
                     }
-                    .tabViewStyle(.page)
-                    .frame(height: 240)
-                } else {
-                    Rectangle()
-                        .fill(Color.borderGray)
-                        .frame(height: 180)
-                        .overlay(
-                            Image(systemName: "house.fill")
-                                .font(.system(size: 40))
-                                .foregroundColor(Color.textGray)
-                        )
                 }
+                .padding(16)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                VStack(alignment: .leading, spacing: 16) {
-                    // Status
+                // Tasks section
+                VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text("ステータス").foregroundColor(Color.textGray)
+                        Text("タスク")
+                            .font(.headline)
+                            .foregroundColor(.textDark)
                         Spacer()
-                        StatusBadge(status: property.status)
+                        NavigationLink("詳細") {
+                            TaskManageView()
+                        }
+                        .font(.caption)
+                        .foregroundColor(.accentBlue)
                     }
 
-                    Divider()
-
-                    // Address
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("住所").font(.caption).foregroundColor(Color.textGray)
-                        Text(property.address).foregroundColor(Color.textDark)
-                    }
-
-                    if let price = property.price {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("価格").font(.caption).foregroundColor(Color.textGray)
-                            Text("\(Int(price / 10000))万円")
-                                .font(.headline).foregroundColor(Color.primaryNavy)
+                    if taskVM.tasks.isEmpty {
+                        Text("タスクが登録されていません")
+                            .font(.caption)
+                            .foregroundColor(.textGray)
+                    } else {
+                        ForEach(taskVM.pendingTasks.prefix(3)) { task in
+                            TaskRowView(task: task)
                         }
                     }
-
-                    if let desc = property.description, !desc.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("説明").font(.caption).foregroundColor(Color.textGray)
-                            Text(desc).foregroundColor(Color.textDark)
-                        }
-                    }
-
-                    Divider()
-
-                    // Chat link
-                    NavigationLink(destination: ChatListView(type: "property", targetId: property.id, targetName: property.name)) {
-                        HStack {
-                            Image(systemName: "bubble.left.and.bubble.right")
-                                .foregroundColor(Color.primaryNavy)
-                            Text("チャット")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(Color.primaryNavy)
-
-                    // Sale request button
-                    Button {
-                        showingSaleRequest = true
-                    } label: {
-                        Label("売出し希望を申請", systemImage: "arrow.up.right.square")
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(Color.secondaryBlue)
-                    .sheet(isPresented: $showingSaleRequest) {
-                        PropertySaleRequestView(
-                            propertyId: property.id,
-                            propertyName: property.name,
-                            thumbnailUrl: property.thumbnailUrl
-                        )
-                    }
-
-                    // Delete button
-                    Button(role: .destructive) {
-                        Task {
-                            await viewModel.deleteProperty(property.id)
-                            dismiss()
-                        }
-                    } label: {
-                        Label("この物件を削除", systemImage: "trash")
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(Color.errorRed)
                 }
-                .padding()
+                .padding(16)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
+            .padding(16)
         }
-        .navigationTitle(property.name)
+        .background(Color.backgroundGray)
+        .navigationTitle("物件管理")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            async let r1: () = propertyVM.fetchRooms(propertyId: property.id)
+            async let r2: () = equipVM.fetchEquipment(propertyId: property.id)
+            async let r3: () = taskVM.fetchTasks(propertyId: property.id)
+            _ = await (r1, r2, r3)
+        }
+    }
+}
+
+struct RoomStatBadge: View {
+    let count: Int
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text("\(count)")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.textGray)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(color.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

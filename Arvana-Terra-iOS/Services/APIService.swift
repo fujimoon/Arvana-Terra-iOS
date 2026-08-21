@@ -1,335 +1,490 @@
 import Foundation
 
 // MARK: - API Errors
-enum APIError: LocalizedError {
+enum APIError: Error, LocalizedError {
     case invalidURL
+    case invalidResponse
     case unauthorized
-    case serverError(String)
-    case decodingError
+    case notFound
+    case serverError(Int)
+    case decodingError(Error)
+    case encodingError(Error)
     case networkError(Error)
+    case unknown
 
     var errorDescription: String? {
         switch self {
         case .invalidURL: return "無効なURLです"
+        case .invalidResponse: return "無効なレスポンスです"
         case .unauthorized: return "認証が必要です"
-        case .serverError(let msg): return msg
-        case .decodingError: return "データの解析に失敗しました"
-        case .networkError(let err): return err.localizedDescription
+        case .notFound: return "リソースが見つかりません"
+        case .serverError(let code): return "サーバーエラー (\(code))"
+        case .decodingError(let error): return "データ解析エラー: \(error.localizedDescription)"
+        case .encodingError(let error): return "データ変換エラー: \(error.localizedDescription)"
+        case .networkError(let error): return "ネットワークエラー: \(error.localizedDescription)"
+        case .unknown: return "不明なエラーです"
         }
     }
 }
 
 // MARK: - API Response Wrapper
-struct APIResponse<T: Decodable>: Decodable {
+struct APIResponse<T: Codable>: Codable {
     let success: Bool
     let data: T?
+    let message: String?
     let error: String?
 }
 
+struct PaginatedResponse<T: Codable>: Codable {
+    let success: Bool
+    let data: [T]
+    let total: Int?
+    let page: Int?
+    let limit: Int?
+}
+
 // MARK: - APIService
-class APIService {
+@MainActor
+class APIService: ObservableObject {
     static let shared = APIService()
-    private let baseURL = AppConfig.baseURL
 
-    private var token: String? {
-        get { UserDefaults.standard.string(forKey: "authToken") }
-        set { UserDefaults.standard.set(newValue, forKey: "authToken") }
+    private let session: URLSession
+    private var accessToken: String? {
+        get { UserDefaults.standard.string(forKey: "accessToken") }
+        set { UserDefaults.standard.set(newValue, forKey: "accessToken") }
+    }
+    private var refreshToken: String? {
+        get { UserDefaults.standard.string(forKey: "refreshToken") }
+        set { UserDefaults.standard.set(newValue, forKey: "refreshToken") }
     }
 
-    func setToken(_ token: String) {
-        self.token = token
+    private init() {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        self.session = URLSession(configuration: config)
     }
 
-    func clearToken() {
-        self.token = nil
+    // MARK: - Token Management
+    func saveTokens(accessToken: String, refreshToken: String) {
+        self.accessToken = accessToken
+        self.refreshToken = refreshToken
     }
 
-    var isAuthenticated: Bool { token != nil }
+    func clearTokens() {
+        accessToken = nil
+        refreshToken = nil
+        UserDefaults.standard.removeObject(forKey: "accessToken")
+        UserDefaults.standard.removeObject(forKey: "refreshToken")
+    }
 
-    // MARK: - Request Builder
-    func makeRequest(path: String, method: String) throws -> URLRequest {
-        guard let url = URL(string: baseURL + path) else {
+    var isAuthenticated: Bool {
+        return accessToken != nil
+    }
+
+    // MARK: - Generic Request
+    private func request<T: Codable>(
+        endpoint: String,
+        method: String = "GET",
+        body: (any Encodable)? = nil,
+        requiresAuth: Bool = true
+    ) async throws -> T {
+        guard let url = URL(string: AppConfig.apiBaseURL + endpoint) else {
             throw APIError.invalidURL
         }
-        var request = URLRequest(url: url)
-        request.httpMethod = method
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let token {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        return request
-    }
 
-    // MARK: - Request Performer
-    func perform<T: Decodable>(_ request: URLRequest) async throws -> T {
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = method
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        if requiresAuth, let token = accessToken {
+            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        if let body = body {
+            do {
+                urlRequest.httpBody = try JSONEncoder().encode(body)
+            } catch {
+                throw APIError.encodingError(error)
+            }
+        }
+
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await session.data(for: urlRequest)
+
             guard let httpResponse = response as? HTTPURLResponse else {
-                throw APIError.serverError("不明なエラーが発生しました")
+                throw APIError.invalidResponse
             }
-            if httpResponse.statusCode == 401 {
+
+            switch httpResponse.statusCode {
+            case 200...299:
+                do {
+                    return try JSONDecoder().decode(T.self, from: data)
+                } catch {
+                    throw APIError.decodingError(error)
+                }
+            case 401:
+                // Try token refresh
+                if requiresAuth, let newToken = try? await refreshAccessToken() {
+                    self.accessToken = newToken
+                    return try await request(endpoint: endpoint, method: method, body: body, requiresAuth: requiresAuth)
+                }
                 throw APIError.unauthorized
+            case 404:
+                throw APIError.notFound
+            case 500...599:
+                throw APIError.serverError(httpResponse.statusCode)
+            default:
+                throw APIError.serverError(httpResponse.statusCode)
             }
-            let decoded = try JSONDecoder().decode(APIResponse<T>.self, from: data)
-            if decoded.success, let result = decoded.data {
-                return result
-            } else {
-                throw APIError.serverError(decoded.error ?? "サーバーエラーが発生しました")
-            }
-        } catch let error as APIError {
-            throw error
-        } catch is DecodingError {
-            throw APIError.decodingError
+        } catch let apiError as APIError {
+            throw apiError
         } catch {
             throw APIError.networkError(error)
         }
     }
 
-    // MARK: - Auth
+    // MARK: - Refresh Token
+    private func refreshAccessToken() async throws -> String {
+        guard let refresh = refreshToken else { throw APIError.unauthorized }
+
+        guard let url = URL(string: AppConfig.apiBaseURL + "/auth/refresh") else {
+            throw APIError.invalidURL
+        }
+
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpBody = try JSONEncoder().encode(RefreshTokenRequest(refreshToken: refresh))
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw APIError.unauthorized
+        }
+
+        let tokenResponse = try JSONDecoder().decode(RefreshTokenResponse.self, from: data)
+        self.accessToken = tokenResponse.accessToken
+        self.refreshToken = tokenResponse.refreshToken
+        return tokenResponse.accessToken
+    }
+
+    // MARK: - Auth Endpoints
     func login(email: String, password: String) async throws -> AuthResponse {
-        var urlRequest = try makeRequest(path: "/auth/login", method: "POST")
-        urlRequest.httpBody = try JSONEncoder().encode(LoginRequest(email: email, password: password))
-        return try await perform(urlRequest)
+        let body = LoginRequest(email: email, password: password)
+        let response: APIResponse<AuthResponse> = try await request(
+            endpoint: "/auth/login",
+            method: "POST",
+            body: body,
+            requiresAuth: false
+        )
+        guard let data = response.data else { throw APIError.invalidResponse }
+        saveTokens(accessToken: data.accessToken, refreshToken: data.refreshToken)
+        return data
     }
 
-    func register(email: String, password: String, name: String, phone: String?, role: String) async throws -> AuthResponse {
-        var urlRequest = try makeRequest(path: "/auth/register", method: "POST")
-        urlRequest.httpBody = try JSONEncoder().encode(RegisterRequest(email: email, password: password, name: name, phone: phone, role: role))
-        return try await perform(urlRequest)
+    func register(email: String, password: String, name: String, role: String? = nil, companyName: String? = nil, phoneNumber: String? = nil) async throws -> AuthResponse {
+        let body = RegisterRequest(email: email, password: password, name: name, role: role, companyName: companyName, phoneNumber: phoneNumber)
+        let response: APIResponse<AuthResponse> = try await request(
+            endpoint: "/auth/register",
+            method: "POST",
+            body: body,
+            requiresAuth: false
+        )
+        guard let data = response.data else { throw APIError.invalidResponse }
+        saveTokens(accessToken: data.accessToken, refreshToken: data.refreshToken)
+        return data
     }
 
-    // MARK: - Public Properties
-    func getPublicProperties() async throws -> [Property] {
-        let urlRequest = try makeRequest(path: "/properties/public", method: "GET")
-        return try await perform(urlRequest)
+    func logout() async throws {
+        let _: APIResponse<EmptyResponse> = try await request(endpoint: "/auth/logout", method: "POST")
+        clearTokens()
     }
 
-    func getPropertyById(_ id: String) async throws -> Property {
-        let urlRequest = try makeRequest(path: "/properties/\(id)", method: "GET")
-        return try await perform(urlRequest)
+    func getCurrentUser() async throws -> User {
+        let response: APIResponse<User> = try await request(endpoint: "/auth/me")
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
     }
 
-    // MARK: - My Properties
-    func getMyProperties() async throws -> [Property] {
-        let urlRequest = try makeRequest(path: "/properties/my", method: "GET")
-        return try await perform(urlRequest)
-    }
-
-    func createProperty(name: String, address: String, description: String?, price: Double?, imageData: [(Data, String)] = []) async throws -> Property {
-        let boundary = UUID().uuidString
-        var urlRequest = try makeRequest(path: "/properties", method: "POST")
-        urlRequest.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-
-        var body = Data()
-        func append(_ field: String, value: String) {
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"\(field)\"\r\n\r\n".data(using: .utf8)!)
-            body.append("\(value)\r\n".data(using: .utf8)!)
-        }
-
-        append("name", value: name)
-        append("address", value: address)
-        if let description { append("description", value: description) }
-        if let price { append("price", value: String(price)) }
-
-        for (index, (data, mimeType)) in imageData.enumerated() {
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"images\"; filename=\"image\(index).jpg\"\r\n".data(using: .utf8)!)
-            body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
-            body.append(data)
-            body.append("\r\n".data(using: .utf8)!)
-        }
-        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
-        urlRequest.httpBody = body
-
-        return try await perform(urlRequest)
-    }
-
-    func updateProperty(_ id: String, name: String?, address: String?, description: String?, price: Double?) async throws -> Property {
-        var urlRequest = try makeRequest(path: "/properties/\(id)", method: "PATCH")
-        var body: [String: Any] = [:]
-        if let name { body["name"] = name }
-        if let address { body["address"] = address }
-        if let description { body["description"] = description }
-        if let price { body["price"] = price }
-        urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
-        return try await perform(urlRequest)
-    }
-
-    func deleteProperty(_ id: String) async throws {
-        let urlRequest = try makeRequest(path: "/properties/\(id)", method: "DELETE")
-        let _: EmptyResponse = try await perform(urlRequest)
-    }
-
-    // MARK: - Public Lands
+    // MARK: - Land Endpoints
     func getPublicLands() async throws -> [Land] {
-        let urlRequest = try makeRequest(path: "/lands/public", method: "GET")
-        return try await perform(urlRequest)
+        let response: PaginatedResponse<Land> = try await request(endpoint: "/lands/public", requiresAuth: false)
+        return response.data
+    }
+
+    func getMyLands() async throws -> [Land] {
+        let response: PaginatedResponse<Land> = try await request(endpoint: "/lands/my")
+        return response.data
     }
 
     func getLandById(_ id: String) async throws -> Land {
-        let urlRequest = try makeRequest(path: "/lands/\(id)", method: "GET")
-        return try await perform(urlRequest)
+        let response: APIResponse<Land> = try await request(endpoint: "/lands/\(id)")
+        guard let data = response.data else { throw APIError.notFound }
+        return data
     }
 
-    // MARK: - My Lands
-    func getMyLands() async throws -> [Land] {
-        let urlRequest = try makeRequest(path: "/lands/my", method: "GET")
-        return try await perform(urlRequest)
+    func createLand(_ request: CreateLandRequest) async throws -> Land {
+        let response: APIResponse<Land> = try await request(endpoint: "/lands", method: "POST", body: request)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
     }
 
-    func createLand(name: String, address: String, description: String?, price: Double?, imageData: [(Data, String)] = []) async throws -> Land {
-        let boundary = UUID().uuidString
-        var urlRequest = try makeRequest(path: "/lands", method: "POST")
-        urlRequest.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-
-        var body = Data()
-        func append(_ field: String, value: String) {
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"\(field)\"\r\n\r\n".data(using: .utf8)!)
-            body.append("\(value)\r\n".data(using: .utf8)!)
-        }
-
-        append("name", value: name)
-        append("address", value: address)
-        if let description { append("description", value: description) }
-        if let price { append("price", value: String(price)) }
-
-        for (index, (data, mimeType)) in imageData.enumerated() {
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"images\"; filename=\"image\(index).jpg\"\r\n".data(using: .utf8)!)
-            body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
-            body.append(data)
-            body.append("\r\n".data(using: .utf8)!)
-        }
-        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
-        urlRequest.httpBody = body
-
-        return try await perform(urlRequest)
-    }
-
-    func updateLand(_ id: String, name: String?, address: String?, description: String?, price: Double?) async throws -> Land {
-        var urlRequest = try makeRequest(path: "/lands/\(id)", method: "PATCH")
-        var body: [String: Any] = [:]
-        if let name { body["name"] = name }
-        if let address { body["address"] = address }
-        if let description { body["description"] = description }
-        if let price { body["price"] = price }
-        urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
-        return try await perform(urlRequest)
+    func updateLand(_ id: String, _ request: UpdateLandRequest) async throws -> Land {
+        let response: APIResponse<Land> = try await request(endpoint: "/lands/\(id)", method: "PUT", body: request)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
     }
 
     func deleteLand(_ id: String) async throws {
-        let urlRequest = try makeRequest(path: "/lands/\(id)", method: "DELETE")
-        let _: EmptyResponse = try await perform(urlRequest)
+        let _: APIResponse<EmptyResponse> = try await request(endpoint: "/lands/\(id)", method: "DELETE")
     }
 
-    // MARK: - Inquiries
-    func submitInquiry(request: InquiryRequest) async throws -> PurchaseInquiry {
-        var urlRequest = try makeRequest(path: "/inquiries", method: "POST")
-        urlRequest.httpBody = try JSONEncoder().encode(request)
-        return try await perform(urlRequest)
+    // MARK: - Property Endpoints
+    func getPublicProperties() async throws -> [Property] {
+        let response: PaginatedResponse<Property> = try await request(endpoint: "/properties/public", requiresAuth: false)
+        return response.data
     }
 
-    // MARK: - Sale Listing Requests
-    func submitSaleRequest(
-        type: String,
-        propertyId: String? = nil,
-        landId: String? = nil,
-        askingPrice: Double? = nil,
-        description: String? = nil,
-        contactInfo: String? = nil,
-        imageData: [(Data, String)] = [] // [(imageData, mimeType)]
-    ) async throws -> SaleListingRequest {
-        // Multipart form data upload
-        let boundary = UUID().uuidString
-        var urlRequest = try makeRequest(path: "/sale-requests", method: "POST")
-        urlRequest.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-
-        var body = Data()
-        func append(_ field: String, value: String) {
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"\(field)\"\r\n\r\n".data(using: .utf8)!)
-            body.append("\(value)\r\n".data(using: .utf8)!)
-        }
-
-        append("type", value: type)
-        if let propertyId { append("propertyId", value: propertyId) }
-        if let landId { append("landId", value: landId) }
-        if let askingPrice { append("askingPrice", value: String(askingPrice)) }
-        if let description { append("description", value: description) }
-        if let contactInfo { append("contactInfo", value: contactInfo) }
-
-        for (index, (data, mimeType)) in imageData.enumerated() {
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"images\"; filename=\"image\(index).jpg\"\r\n".data(using: .utf8)!)
-            body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
-            body.append(data)
-            body.append("\r\n".data(using: .utf8)!)
-        }
-        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
-        urlRequest.httpBody = body
-
-        return try await perform(urlRequest)
+    func getMyProperties() async throws -> [Property] {
+        let response: PaginatedResponse<Property> = try await request(endpoint: "/properties/my")
+        return response.data
     }
 
-    func getMySaleRequests() async throws -> [SaleListingRequest] {
-        let urlRequest = try makeRequest(path: "/sale-requests/my", method: "GET")
-        return try await perform(urlRequest)
+    func getPropertyById(_ id: String) async throws -> Property {
+        let response: APIResponse<Property> = try await request(endpoint: "/properties/\(id)")
+        guard let data = response.data else { throw APIError.notFound }
+        return data
     }
 
-    // MARK: - ユーザー設定（プリファレンス）
-    func getUserPreference() async throws -> UserPreference {
-        let request = try makeRequest(path: "/preferences", method: "GET")
-        return try await perform(request)
+    func createProperty(_ body: CreatePropertyRequest) async throws -> Property {
+        let response: APIResponse<Property> = try await request(endpoint: "/properties", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
     }
 
-    func updateUserPreference(displayMode: String?, displayPrefectures: [String]?, preferredRegions: [String]?) async throws -> UserPreference {
-        var body: [String: Any] = [:]
-        if let displayMode { body["displayMode"] = displayMode }
-        if let displayPrefectures { body["displayPrefectures"] = displayPrefectures }
-        if let preferredRegions { body["preferredRegions"] = preferredRegions }
-        var request = try makeRequest(path: "/preferences", method: "PUT")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        return try await perform(request)
+    func updateProperty(_ id: String, _ body: UpdatePropertyRequest) async throws -> Property {
+        let response: APIResponse<Property> = try await request(endpoint: "/properties/\(id)", method: "PUT", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
     }
 
-    func updateUserProfile(name: String?, phone: String?, address: String?, bio: String?, prefecture: String?, prefectures: [String]?) async throws -> User {
-        var body: [String: Any] = [:]
-        if let name { body["name"] = name }
-        if let phone { body["phone"] = phone }
-        if let address { body["address"] = address }
-        if let bio { body["bio"] = bio }
-        if let prefecture { body["prefecture"] = prefecture }
-        if let prefectures { body["prefectures"] = prefectures }
-        var request = try makeRequest(path: "/users/me", method: "PUT")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        return try await perform(request)
+    func deleteProperty(_ id: String) async throws {
+        let _: APIResponse<EmptyResponse> = try await request(endpoint: "/properties/\(id)", method: "DELETE")
     }
 
-    // MARK: - 従業員
+    // MARK: - Room Endpoints
+    func getRooms(propertyId: String) async throws -> [Room] {
+        let response: PaginatedResponse<Room> = try await request(endpoint: "/properties/\(propertyId)/rooms")
+        return response.data
+    }
+
+    func getRoomById(_ id: String) async throws -> Room {
+        let response: APIResponse<Room> = try await request(endpoint: "/rooms/\(id)")
+        guard let data = response.data else { throw APIError.notFound }
+        return data
+    }
+
+    func createRoom(_ body: CreateRoomRequest) async throws -> Room {
+        let response: APIResponse<Room> = try await request(endpoint: "/rooms", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    func updateRoom(_ id: String, _ body: UpdateRoomRequest) async throws -> Room {
+        let response: APIResponse<Room> = try await request(endpoint: "/rooms/\(id)", method: "PUT", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    // MARK: - Equipment Endpoints
+    func getEquipment(propertyId: String) async throws -> [Equipment] {
+        let response: PaginatedResponse<Equipment> = try await request(endpoint: "/properties/\(propertyId)/equipment")
+        return response.data
+    }
+
+    func getEquipmentById(_ id: String) async throws -> Equipment {
+        let response: APIResponse<Equipment> = try await request(endpoint: "/equipment/\(id)")
+        guard let data = response.data else { throw APIError.notFound }
+        return data
+    }
+
+    func createEquipment(_ body: CreateEquipmentRequest) async throws -> Equipment {
+        let response: APIResponse<Equipment> = try await request(endpoint: "/equipment", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    func updateEquipment(_ id: String, _ body: UpdateEquipmentRequest) async throws -> Equipment {
+        let response: APIResponse<Equipment> = try await request(endpoint: "/equipment/\(id)", method: "PUT", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    // MARK: - Contract Endpoints
+    func getContracts() async throws -> [Contract] {
+        let response: PaginatedResponse<Contract> = try await request(endpoint: "/contracts")
+        return response.data
+    }
+
+    func getContractById(_ id: String) async throws -> Contract {
+        let response: APIResponse<Contract> = try await request(endpoint: "/contracts/\(id)")
+        guard let data = response.data else { throw APIError.notFound }
+        return data
+    }
+
+    func createContract(_ body: CreateContractRequest) async throws -> Contract {
+        let response: APIResponse<Contract> = try await request(endpoint: "/contracts", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    func updateContract(_ id: String, _ body: UpdateContractRequest) async throws -> Contract {
+        let response: APIResponse<Contract> = try await request(endpoint: "/contracts/\(id)", method: "PUT", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    // MARK: - Chat Endpoints
+    func getChatRooms() async throws -> [ChatRoom] {
+        let response: PaginatedResponse<ChatRoom> = try await request(endpoint: "/chat/rooms")
+        return response.data
+    }
+
+    func getChatMessages(roomId: String) async throws -> [ChatMessage] {
+        let response: PaginatedResponse<ChatMessage> = try await request(endpoint: "/chat/rooms/\(roomId)/messages")
+        return response.data
+    }
+
+    func sendMessage(roomId: String, content: String, messageType: String = "text") async throws -> ChatMessage {
+        let body = SendMessageRequest(content: content, messageType: messageType)
+        let response: APIResponse<ChatMessage> = try await request(endpoint: "/chat/rooms/\(roomId)/messages", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    func createChatRoom(_ body: CreateChatRoomRequest) async throws -> ChatRoom {
+        let response: APIResponse<ChatRoom> = try await request(endpoint: "/chat/rooms", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    // MARK: - Task Endpoints
+    func getTasks(propertyId: String? = nil, landId: String? = nil) async throws -> [Task] {
+        var endpoint = "/tasks"
+        var queryItems: [String] = []
+        if let pid = propertyId { queryItems.append("propertyId=\(pid)") }
+        if let lid = landId { queryItems.append("landId=\(lid)") }
+        if !queryItems.isEmpty { endpoint += "?" + queryItems.joined(separator: "&") }
+        let response: PaginatedResponse<Task> = try await request(endpoint: endpoint)
+        return response.data
+    }
+
+    func createTask(_ body: CreateTaskRequest) async throws -> Task {
+        let response: APIResponse<Task> = try await request(endpoint: "/tasks", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    func updateTask(_ id: String, _ body: UpdateTaskRequest) async throws -> Task {
+        let response: APIResponse<Task> = try await request(endpoint: "/tasks/\(id)", method: "PUT", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    func aiSuggestTasks(_ body: AISuggestTasksRequest) async throws -> AISuggestTasksResponse {
+        let response: APIResponse<AISuggestTasksResponse> = try await request(endpoint: "/tasks/ai-suggest", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    // MARK: - Employee Endpoints
     func getEmployees() async throws -> [Employee] {
-        let request = try makeRequest(path: "/employees", method: "GET")
-        return try await perform(request)
+        let response: PaginatedResponse<Employee> = try await request(endpoint: "/employees")
+        return response.data
     }
 
-    func getEmployee(id: String) async throws -> Employee {
-        let request = try makeRequest(path: "/employees/\(id)", method: "GET")
-        return try await perform(request)
+    func getEmployeeById(_ id: String) async throws -> Employee {
+        let response: APIResponse<Employee> = try await request(endpoint: "/employees/\(id)")
+        guard let data = response.data else { throw APIError.notFound }
+        return data
     }
 
-    func createEmployee(data: [String: Any]) async throws -> Employee {
-        var request = try makeRequest(path: "/employees", method: "POST")
-        request.httpBody = try JSONSerialization.data(withJSONObject: data)
-        return try await perform(request)
+    // MARK: - Vendor Endpoints
+    func getVendors() async throws -> [Vendor] {
+        let response: PaginatedResponse<Vendor> = try await request(endpoint: "/vendors")
+        return response.data
     }
 
-    func updateEmployee(id: String, data: [String: Any]) async throws -> Employee {
-        var request = try makeRequest(path: "/employees/\(id)", method: "PUT")
-        request.httpBody = try JSONSerialization.data(withJSONObject: data)
-        return try await perform(request)
+    func getVendorById(_ id: String) async throws -> Vendor {
+        let response: APIResponse<Vendor> = try await request(endpoint: "/vendors/\(id)")
+        guard let data = response.data else { throw APIError.notFound }
+        return data
+    }
+
+    func getMyVendors() async throws -> [Vendor] {
+        let response: PaginatedResponse<Vendor> = try await request(endpoint: "/vendors/my")
+        return response.data
+    }
+
+    // MARK: - SNS Endpoints
+    func getPosts(category: String? = nil) async throws -> [SnsPost] {
+        var endpoint = "/sns/posts"
+        if let cat = category { endpoint += "?category=\(cat)" }
+        let response: PaginatedResponse<SnsPost> = try await request(endpoint: endpoint)
+        return response.data
+    }
+
+    func getPostById(_ id: String) async throws -> SnsPost {
+        let response: APIResponse<SnsPost> = try await request(endpoint: "/sns/posts/\(id)")
+        guard let data = response.data else { throw APIError.notFound }
+        return data
+    }
+
+    func createPost(_ body: CreatePostRequest) async throws -> SnsPost {
+        let response: APIResponse<SnsPost> = try await request(endpoint: "/sns/posts", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    func likePost(_ id: String) async throws {
+        let _: APIResponse<EmptyResponse> = try await request(endpoint: "/sns/posts/\(id)/like", method: "POST")
+    }
+
+    func getComments(postId: String) async throws -> [SnsComment] {
+        let response: PaginatedResponse<SnsComment> = try await request(endpoint: "/sns/posts/\(postId)/comments")
+        return response.data
+    }
+
+    func createComment(postId: String, content: String) async throws -> SnsComment {
+        let body = CreateCommentRequest(content: content)
+        let response: APIResponse<SnsComment> = try await request(endpoint: "/sns/posts/\(postId)/comments", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    // MARK: - Opportunity Endpoints
+    func getOpportunities() async throws -> [BusinessOpportunity] {
+        let response: PaginatedResponse<BusinessOpportunity> = try await request(endpoint: "/opportunities")
+        return response.data
+    }
+
+    // MARK: - Valuation Endpoints
+    func getValuation(propertyId: String? = nil, landId: String? = nil) async throws -> [AssetValuation] {
+        var endpoint = "/valuations"
+        var queryItems: [String] = []
+        if let pid = propertyId { queryItems.append("propertyId=\(pid)") }
+        if let lid = landId { queryItems.append("landId=\(lid)") }
+        if !queryItems.isEmpty { endpoint += "?" + queryItems.joined(separator: "&") }
+        let response: PaginatedResponse<AssetValuation> = try await request(endpoint: endpoint)
+        return response.data
+    }
+
+    func calculateValuation(_ body: CalculateValuationRequest) async throws -> CalculateValuationResponse {
+        let response: APIResponse<CalculateValuationResponse> = try await request(endpoint: "/valuations/calculate", method: "POST", body: body)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
     }
 }
 
 // MARK: - Empty Response Helper
-struct EmptyResponse: Decodable {}
+struct EmptyResponse: Codable {}

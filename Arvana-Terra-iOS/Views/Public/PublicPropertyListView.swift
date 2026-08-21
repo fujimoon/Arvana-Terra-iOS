@@ -1,104 +1,50 @@
 import SwiftUI
 
 struct PublicPropertyListView: View {
-    @StateObject private var viewModel = PropertyViewModel()
-    @ObservedObject var regionManager = RegionModeManager.shared
+    @StateObject private var vm = PropertyViewModel()
+    @State private var searchText = ""
 
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // 地域モードバナー
-                if regionManager.isRegionalMode {
-                    HStack {
-                        Image(systemName: "map.fill")
-                            .font(.caption)
-                        Text("地域モード: \(regionManager.displayPrefectures.joined(separator: "・"))")
-                            .font(.caption)
-                        Spacer()
-                        Button("全国") { regionManager.toggleMode() }
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
-                    .padding(8)
-                    .background(Color.primaryNavy.opacity(0.1))
-                    .foregroundColor(Color.primaryNavy)
-                    .cornerRadius(8)
-                    .padding(.horizontal)
-                    .padding(.top, 4)
-                }
-
-                Group {
-                    if viewModel.isLoading {
-                        ProgressView("読み込み中...")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if viewModel.publicProperties.isEmpty {
-                        VStack(spacing: 12) {
-                            Image(systemName: "house.slash")
-                                .font(.system(size: 48))
-                                .foregroundColor(Color.borderGray)
-                            Text("現在、売り出し中の物件はありません")
-                                .foregroundColor(Color.textGray)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        List(viewModel.publicProperties) { property in
-                            NavigationLink(destination: PublicPropertyDetailView(property: property)) {
-                                PropertyRowView(property: property)
-                            }
-                        }
-                        .listStyle(.plain)
-                    }
-                }
-            }
-            .navigationTitle("売り出し中の物件")
-            .refreshable {
-                await viewModel.loadPublicProperties()
-            }
-        }
-        .task {
-            await viewModel.loadPublicProperties()
+    var filteredProperties: [Property] {
+        if searchText.isEmpty { return vm.publicProperties }
+        return vm.publicProperties.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText) ||
+            $0.address.localizedCaseInsensitiveContains(searchText)
         }
     }
-}
-
-struct PropertyRowView: View {
-    let property: Property
 
     var body: some View {
-        HStack(spacing: 12) {
-            if let urlStr = property.thumbnailUrl, let url = URL(string: urlStr) {
-                AsyncImage(url: url) { img in
-                    img.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.borderGray
+        Group {
+            if vm.isLoading {
+                LoadingView()
+            } else if let error = vm.errorMessage {
+                ErrorView(message: error) {
+                    Task { await vm.fetchPublicProperties() }
                 }
-                .frame(width: 70, height: 70)
-                .cornerRadius(8)
-                .clipped()
+            } else if filteredProperties.isEmpty {
+                EmptyStateView(
+                    title: "物件が見つかりません",
+                    message: "公開中の物件はまだありません",
+                    systemImage: "building.2"
+                )
             } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.borderGray)
-                    .frame(width: 70, height: 70)
-                    .overlay(Image(systemName: "house").foregroundColor(Color.textGray))
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(property.name)
-                    .font(.headline)
-                    .foregroundColor(Color.textDark)
-                    .lineLimit(1)
-                Text(property.address)
-                    .font(.caption)
-                    .foregroundColor(Color.textGray)
-                    .lineLimit(1)
-                if let price = property.price {
-                    Text("\(Int(price / 10000))万円")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color.primaryNavy)
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(filteredProperties) { property in
+                            NavigationLink {
+                                PublicPropertyDetailView(property: property)
+                            } label: {
+                                PropertyCard(property: property)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(16)
                 }
+                .background(Color.backgroundGray)
             }
         }
-        .padding(.vertical, 4)
+        .navigationTitle("公開物件一覧")
+        .searchable(text: $searchText, prompt: "物件名・住所で検索")
+        .task { await vm.fetchPublicProperties() }
     }
 }

@@ -1,385 +1,200 @@
 import SwiftUI
 
 struct RoomDetailView: View {
-    let roomId: String
-    @State private var room: Room?
-    @State private var isLoading = true
-    @State private var selectedTab = 0
-    @State private var showingAddTenant = false
-    @State private var showingEditRoom = false
-
-    var activeTenant: Tenant? { room?.tenants?.first { $0.status == "active" } }
-    var payments: [Payment] { room?.payments ?? [] }
-    var overduePayments: [Payment] { payments.filter { $0.status == "overdue" } }
+    let room: Room
+    @State private var showEdit = false
 
     var body: some View {
-        Group {
-            if isLoading {
-                ProgressView()
-            } else if let room = room {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Overdue Warning
-                        if !overduePayments.isEmpty {
-                            HStack(spacing: 8) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.red)
-                                Text("\(overduePayments.count)件の滞納が発生しています")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.red)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
-                            .background(Color.red.opacity(0.08))
-                            .cornerRadius(10)
-                            .padding(.horizontal)
-                            .padding(.top)
-                        }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("部屋 \(room.roomNumber)")
+                            .font(.title2).fontWeight(.bold).foregroundColor(.textDark)
+                        Text("\(room.floor)階 · \(roomTypeLabel(room.roomType))")
+                            .font(.subheadline).foregroundColor(.textGray)
+                    }
+                    Spacer()
+                    StatusBadge(status: room.status, type: .room)
+                }
+                .padding(16)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                        // Tab Picker
-                        Picker("", selection: $selectedTab) {
-                            Text("部屋情報").tag(0)
-                            Text("入居者").tag(1)
-                            Text("入金管理").tag(2)
-                        }
-                        .pickerStyle(.segmented)
-                        .padding()
-
-                        // Tab Content
-                        switch selectedTab {
-                        case 0: RoomInfoTab(room: room)
-                        case 1: TenantTab(activeTenant: activeTenant, roomId: roomId) { Task { await loadRoom() } }
-                        default: PaymentsTab(payments: payments) { Task { await loadRoom() } }
-                        }
+                // Details
+                VStack(spacing: 12) {
+                    DetailRow(label: "面積", value: "\(String(format: "%.1f", room.area))㎡", icon: "square.dashed")
+                    if let rent = room.rentPrice {
+                        DetailRow(label: "賃料", value: formatCurrency(rent) + "/月", icon: "yensign.circle")
+                    }
+                    if let name = room.occupantName {
+                        DetailRow(label: "入居者", value: name, icon: "person.fill")
+                    }
+                    if let contact = room.occupantContact {
+                        DetailRow(label: "連絡先", value: contact, icon: "phone.fill")
+                    }
+                    if let start = room.contractStartDate {
+                        DetailRow(label: "契約開始", value: formatDate(start), icon: "calendar")
+                    }
+                    if let end = room.contractEndDate {
+                        DetailRow(label: "契約終了", value: formatDate(end), icon: "calendar.badge.exclamationmark")
                     }
                 }
-                .navigationTitle(room.name)
-                .navigationBarTitleDisplayMode(.large)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("編集") { showingEditRoom = true }
+                .padding(16)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                if let notes = room.notes, !notes.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("備考").font(.subheadline).fontWeight(.semibold).foregroundColor(.textGray)
+                        Text(notes).font(.body).foregroundColor(.textDark)
                     }
+                    .padding(16)
+                    .background(Color.surfaceWhite)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .sheet(isPresented: $showingEditRoom) {
-                    RoomFormView(propertyId: room.propertyId, existingRoom: room) { _ in Task { await loadRoom() } }
+            }
+            .padding(16)
+        }
+        .background(Color.backgroundGray)
+        .navigationTitle("部屋詳細")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showEdit = true }) {
+                    Image(systemName: "pencil").foregroundColor(.primaryNavy)
                 }
             }
         }
-        .task { await loadRoom() }
     }
 
-    private func loadRoom() async {
-        isLoading = true
-        defer { isLoading = false }
-        room = try? await RoomService.shared.getRoomById(id: roomId)
+    func roomTypeLabel(_ type: String) -> String {
+        switch type {
+        case "residence": return "居住用"
+        case "office": return "オフィス"
+        case "store": return "店舗"
+        case "warehouse": return "倉庫"
+        case "parking": return "駐車場"
+        default: return type
+        }
+    }
+
+    func formatCurrency(_ value: Double) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.groupingSeparator = ","
+        return "¥" + (f.string(from: NSNumber(value: value)) ?? "0")
+    }
+
+    func formatDate(_ dateString: String) -> String {
+        let fmt = ISO8601DateFormatter()
+        guard let date = fmt.date(from: dateString) else { return dateString }
+        let f = DateFormatter()
+        f.dateFormat = "yyyy年M月d日"
+        f.locale = Locale(identifier: "ja_JP")
+        return f.string(from: date)
     }
 }
 
-struct RoomInfoTab: View {
+struct RoomOccupancyView: View {
+    let property: Property
+    @StateObject private var vm = PropertyViewModel()
+
+    var vacantRooms: [Room] { vm.rooms.filter { $0.status == "vacant" } }
+    var occupiedRooms: [Room] { vm.rooms.filter { $0.status == "occupied" } }
+    var maintenanceRooms: [Room] { vm.rooms.filter { $0.status == "maintenance" } }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Occupancy summary
+                VStack(spacing: 4) {
+                    Text("稼働率")
+                        .font(.subheadline).foregroundColor(.textGray)
+                    Text("\(Int(vm.occupancyRate))%")
+                        .font(.system(size: 52, weight: .bold)).foregroundColor(.primaryNavy)
+
+                    HStack(spacing: 20) {
+                        OccupancyStat(value: occupiedRooms.count, label: "入居中", color: .successGreen)
+                        OccupancyStat(value: vacantRooms.count, label: "空室", color: .accentBlue)
+                        OccupancyStat(value: maintenanceRooms.count, label: "メンテ", color: .warningOrange)
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(20)
+                .background(Color.surfaceWhite)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                // Room grid by floor
+                let floors = Array(Set(vm.rooms.map { $0.floor })).sorted()
+                ForEach(floors, id: \.self) { floor in
+                    let floorRooms = vm.rooms.filter { $0.floor == floor }.sorted { $0.roomNumber < $1.roomNumber }
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("\(floor)階 (\(floorRooms.count)室)")
+                            .font(.headline).foregroundColor(.textDark)
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                            ForEach(floorRooms) { room in
+                                NavigationLink {
+                                    RoomDetailView(room: room)
+                                } label: {
+                                    RoomGridCell(room: room)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    .padding(16)
+                    .background(Color.surfaceWhite)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+            }
+            .padding(16)
+        }
+        .background(Color.backgroundGray)
+        .navigationTitle("入居状況")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await vm.fetchRooms(propertyId: property.id) }
+    }
+}
+
+struct OccupancyStat: View {
+    let value: Int
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("\(value)").font(.title2).fontWeight(.bold).foregroundColor(color)
+            Text(label).font(.caption).foregroundColor(.textGray)
+        }
+    }
+}
+
+struct RoomGridCell: View {
     let room: Room
 
-    var body: some View {
-        VStack(spacing: 12) {
-            InfoCard(title: "基本情報") {
-                InfoRow("部屋番号", room.name)
-                InfoRow("階数", room.floor.map { "\($0)階" } ?? "-")
-                InfoRow("間取り", room.roomType ?? "-")
-                InfoRow("面積", room.area.map { "\(Int($0))m2" } ?? "-")
-                InfoRow("月額賃料", room.rentAmount.map { "¥\(Int($0).formatted())" } ?? "-")
-            }
-
-            if let spots = room.parkingSpots, !spots.isEmpty {
-                InfoCard(title: "駐車場") {
-                    ForEach(spots) { spot in
-                        HStack {
-                            Text(spot.spotNumber).fontWeight(.medium)
-                            Spacer()
-                            Text(spot.isOccupied ? "使用中" : "空き")
-                                .font(.caption)
-                                .padding(.horizontal, 8).padding(.vertical, 3)
-                                .background(spot.isOccupied ? Color.blue.opacity(0.15) : Color.green.opacity(0.15))
-                                .foregroundColor(spot.isOccupied ? .blue : .green)
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-            }
-
-            if let notes = room.notes, !notes.isEmpty {
-                InfoCard(title: "メモ・所見") {
-                    Text(notes)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
-        .padding(.horizontal)
-        .padding(.bottom)
-    }
-}
-
-struct TenantTab: View {
-    let activeTenant: Tenant?
-    let roomId: String
-    let onRefresh: () -> Void
-    @State private var showingAddTenant = false
-    @State private var showingAddFamily = false
-
-    var body: some View {
-        VStack(spacing: 12) {
-            if let tenant = activeTenant {
-                // Basic Info
-                InfoCard(title: "基本情報") {
-                    InfoRow("氏名", tenant.name)
-                    InfoRow("フリガナ", tenant.nameKana ?? "-")
-                    InfoRow("生年月日", tenant.birthDate.flatMap { formatDate($0) } ?? "-")
-                    InfoRow("性別", tenant.gender == "male" ? "男性" : tenant.gender == "female" ? "女性" : tenant.gender ?? "-")
-                    InfoRow("電話", tenant.phone ?? "-")
-                    InfoRow("メール", tenant.email ?? "-")
-                    InfoRow("職業", tenant.occupation ?? "-")
-                    InfoRow("勤務先", tenant.workplace ?? "-")
-                    InfoRow("年収", tenant.annualIncome.map { "¥\(Int($0).formatted())" } ?? "-")
-                }
-
-                // Emergency Contact
-                InfoCard(title: "緊急連絡先") {
-                    InfoRow("氏名", tenant.emergencyContactName ?? "-")
-                    InfoRow("続柄", tenant.emergencyContactRelationship ?? "-")
-                    InfoRow("電話", tenant.emergencyContactPhone ?? "-")
-                }
-
-                // Parking
-                InfoCard(title: "駐車場") {
-                    InfoRow("利用", tenant.parkingUsed ? "利用中" : "利用なし")
-                    if tenant.parkingUsed {
-                        InfoRow("駐車場番号", tenant.parkingSpotNumber ?? "-")
-                        InfoRow("ナンバープレート", tenant.licensePlateNumber ?? "-")
-                    }
-                }
-
-                // Family Members
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("家族構成")
-                            .font(.headline)
-                            .foregroundColor(Color(hex: "#1B3A6B"))
-                        Spacer()
-                        Button {
-                            showingAddFamily = true
-                        } label: {
-                            Label("追加", systemImage: "plus")
-                                .font(.subheadline)
-                        }
-                    }
-
-                    if let members = tenant.familyMembers, !members.isEmpty {
-                        ForEach(members) { member in
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: "person.fill")
-                                    .foregroundColor(Color(hex: "#4A90D9"))
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(member.name).fontWeight(.medium)
-                                    if let kana = member.nameKana {
-                                        Text(kana).font(.caption).foregroundColor(.secondary)
-                                    }
-                                    Text("\(member.relationship)\(member.birthDate.flatMap { " / \(formatDate($0))" } ?? "")\(member.occupation.map { " / \($0)" } ?? "")")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            .padding(10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                        }
-                    } else {
-                        Text("家族情報なし")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 12)
-                    }
-                }
-                .padding(14)
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
-
-                // Contract
-                InfoCard(title: "契約情報") {
-                    InfoRow("入居日", tenant.moveInDate.flatMap { formatDate($0) } ?? "-")
-                    InfoRow("契約終了日", tenant.contractEndDate.flatMap { formatDate($0) } ?? "-")
-                    InfoRow("月額賃料", tenant.rentAmount.map { "¥\(Int($0).formatted())" } ?? "-")
-                    InfoRow("敷金", tenant.depositAmount.map { "¥\(Int($0).formatted())" } ?? "-")
-                    InfoRow("礼金", tenant.keyMoneyAmount.map { "¥\(Int($0).formatted())" } ?? "-")
-                }
-
-                if let notes = tenant.notes, !notes.isEmpty {
-                    InfoCard(title: "メモ") {
-                        Text(notes).font(.subheadline).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-            } else {
-                VStack(spacing: 16) {
-                    Image(systemName: "person.slash")
-                        .font(.system(size: 48))
-                        .foregroundColor(.gray.opacity(0.3))
-                    Text("入居者が登録されていません")
-                        .foregroundColor(.gray)
-                    Button {
-                        showingAddTenant = true
-                    } label: {
-                        Label("入居者を登録", systemImage: "plus")
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(Color(hex: "#1B3A6B"))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                }
-                .frame(maxWidth: .infinity, minHeight: 200)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.bottom)
-        .sheet(isPresented: $showingAddTenant) {
-            TenantFormView(roomId: roomId, onSaved: onRefresh)
-        }
-        .sheet(isPresented: $showingAddFamily) {
-            if let tenant = activeTenant {
-                FamilyMemberFormView(tenantId: tenant.id, onSaved: onRefresh)
-            }
-        }
-    }
-
-    private func formatDate(_ isoString: String) -> String? {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: isoString) else { return nil }
-        let out = DateFormatter()
-        out.dateStyle = .medium
-        out.locale = Locale(identifier: "ja_JP")
-        return out.string(from: date)
-    }
-}
-
-struct PaymentsTab: View {
-    let payments: [Payment]
-    let onRefresh: () -> Void
-
-    var body: some View {
-        VStack(spacing: 8) {
-            if payments.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "yensign.circle")
-                        .font(.system(size: 48))
-                        .foregroundColor(.gray.opacity(0.3))
-                    Text("入金記録がありません")
-                        .foregroundColor(.gray)
-                }
-                .frame(maxWidth: .infinity, minHeight: 200)
-            } else {
-                ForEach(payments) { payment in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(formatDate(payment.dueDate) ?? payment.dueDate)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            Text("¥\(Int(payment.amount).formatted())")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 4) {
-                            PaymentStatusBadge(status: payment.status, label: payment.statusLabel)
-                            if payment.status != "paid" {
-                                Button("支払済にする") {
-                                    Task {
-                                        try? await TenantService.shared.updatePaymentStatus(id: payment.id, status: "paid")
-                                        onRefresh()
-                                    }
-                                }
-                                .font(.caption)
-                                .foregroundColor(.green)
-                            }
-                        }
-                    }
-                    .padding(12)
-                    .background(payment.status == "overdue" ? Color.red.opacity(0.05) : Color(.systemBackground))
-                    .cornerRadius(10)
-                    .shadow(color: .black.opacity(0.04), radius: 3, x: 0, y: 1)
-                }
-            }
-        }
-        .padding(.horizontal)
-        .padding(.bottom)
-    }
-
-    private func formatDate(_ isoString: String) -> String? {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: isoString) else { return nil }
-        let out = DateFormatter()
-        out.dateStyle = .medium
-        out.locale = Locale(identifier: "ja_JP")
-        return out.string(from: date)
-    }
-}
-
-struct PaymentStatusBadge: View {
-    let status: String
-    let label: String
-
-    var color: Color {
-        switch status {
-        case "paid": return .green
-        case "pending": return .orange
-        case "overdue": return .red
-        default: return .gray
+    var cellColor: Color {
+        switch room.status {
+        case "occupied": return .successGreen
+        case "vacant": return .accentBlue
+        case "maintenance": return .warningOrange
+        case "reserved": return .secondaryBlue
+        default: return .textGray
         }
     }
 
     var body: some View {
-        Text(label)
-            .font(.caption)
-            .fontWeight(.medium)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.15))
-            .foregroundColor(color)
-            .cornerRadius(8)
-    }
-}
-
-struct InfoCard<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(Color(hex: "#1B3A6B"))
-            content
+        VStack(spacing: 2) {
+            Text(room.roomNumber)
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .lineLimit(1)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
-    }
-}
-
-struct InfoRow: View {
-    let label: String
-    let value: String
-    init(_ label: String, _ value: String) {
-        self.label = label; self.value = value
-    }
-    var body: some View {
-        HStack(alignment: .top) {
-            Text(label).font(.caption).foregroundColor(.secondary).frame(width: 100, alignment: .leading)
-            Text(value).font(.subheadline).foregroundColor(.primary).frame(maxWidth: .infinity, alignment: .leading)
-        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 44)
+        .background(cellColor)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 }
