@@ -162,10 +162,11 @@ class APIService: ObservableObject {
             throw APIError.unauthorized
         }
 
-        let tokenResponse = try JSONDecoder().decode(RefreshTokenResponse.self, from: data)
-        self.accessToken = tokenResponse.accessToken
-        self.refreshToken = tokenResponse.refreshToken
-        return tokenResponse.accessToken
+        let wrapped = try JSONDecoder().decode(APIResponse<RefreshTokenResponse>.self, from: data)
+        guard let tokenData = wrapped.data else { throw APIError.invalidResponse }
+        self.accessToken = tokenData.accessToken
+        self.refreshToken = tokenData.refreshToken
+        return tokenData.accessToken
     }
 
     // MARK: - Auth Endpoints
@@ -208,7 +209,7 @@ class APIService: ObservableObject {
 
     // MARK: - Land Endpoints
     func getPublicLands() async throws -> [Land] {
-        let response: PaginatedResponse<Land> = try await request(endpoint: "/lands/public", requiresAuth: false)
+        let response: PaginatedResponse<Land> = try await request(endpoint: "/lands", requiresAuth: false)
         return response.data
     }
 
@@ -224,13 +225,13 @@ class APIService: ObservableObject {
     }
 
     func createLand(_ request: CreateLandRequest) async throws -> Land {
-        let response: APIResponse<Land> = try await request(endpoint: "/lands", method: "POST", body: request)
+        let response: APIResponse<Land> = try await self.request(endpoint: "/lands", method: "POST", body: request)
         guard let data = response.data else { throw APIError.invalidResponse }
         return data
     }
 
     func updateLand(_ id: String, _ request: UpdateLandRequest) async throws -> Land {
-        let response: APIResponse<Land> = try await request(endpoint: "/lands/\(id)", method: "PUT", body: request)
+        let response: APIResponse<Land> = try await self.request(endpoint: "/lands/(id)", method: "PUT", body: request)
         guard let data = response.data else { throw APIError.invalidResponse }
         return data
     }
@@ -241,7 +242,7 @@ class APIService: ObservableObject {
 
     // MARK: - Property Endpoints
     func getPublicProperties() async throws -> [Property] {
-        let response: PaginatedResponse<Property> = try await request(endpoint: "/properties/public", requiresAuth: false)
+        let response: PaginatedResponse<Property> = try await request(endpoint: "/properties", requiresAuth: false)
         return response.data
     }
 
@@ -369,24 +370,24 @@ class APIService: ObservableObject {
     }
 
     // MARK: - Task Endpoints
-    func getTasks(propertyId: String? = nil, landId: String? = nil) async throws -> [Task] {
+    func getTasks(propertyId: String? = nil, landId: String? = nil) async throws -> [AppTask] {
         var endpoint = "/tasks"
         var queryItems: [String] = []
         if let pid = propertyId { queryItems.append("propertyId=\(pid)") }
         if let lid = landId { queryItems.append("landId=\(lid)") }
         if !queryItems.isEmpty { endpoint += "?" + queryItems.joined(separator: "&") }
-        let response: PaginatedResponse<Task> = try await request(endpoint: endpoint)
+        let response: PaginatedResponse<AppTask> = try await request(endpoint: endpoint)
         return response.data
     }
 
-    func createTask(_ body: CreateTaskRequest) async throws -> Task {
-        let response: APIResponse<Task> = try await request(endpoint: "/tasks", method: "POST", body: body)
+    func createTask(_ body: CreateTaskRequest) async throws -> AppTask {
+        let response: APIResponse<AppTask> = try await request(endpoint: "/tasks", method: "POST", body: body)
         guard let data = response.data else { throw APIError.invalidResponse }
         return data
     }
 
-    func updateTask(_ id: String, _ body: UpdateTaskRequest) async throws -> Task {
-        let response: APIResponse<Task> = try await request(endpoint: "/tasks/\(id)", method: "PUT", body: body)
+    func updateTask(_ id: String, _ body: UpdateTaskRequest) async throws -> AppTask {
+        let response: APIResponse<AppTask> = try await request(endpoint: "/tasks/\(id)", method: "PUT", body: body)
         guard let data = response.data else { throw APIError.invalidResponse }
         return data
     }
@@ -494,7 +495,7 @@ class APIService: ObservableObject {
     }
 
     func createPayment(propertyId: String, request: CreatePaymentRequest) async throws -> Payment {
-        let response: APIResponse<Payment> = try await request(endpoint: "/properties/\(propertyId)/payments", method: "POST", body: request)
+        let response: APIResponse<Payment> = try await self.request(endpoint: "/properties/\(propertyId)/payments", method: "POST", body: request)
         guard let data = response.data else { throw APIError.invalidResponse }
         return data
     }
@@ -526,7 +527,14 @@ class APIService: ObservableObject {
     }
 
     func createSmartDevice(propertyId: String, request: CreateSmartDeviceRequest) async throws -> SmartDeviceData {
-        let response: APIResponse<SmartDeviceData> = try await request(endpoint: "/properties/\(propertyId)/smart-devices", method: "POST", body: request)
+        let response: APIResponse<SmartDeviceData> = try await self.request(endpoint: "/properties/(propertyId)/smart-devices", method: "POST", body: request)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    // MARK: - Inquiry Endpoints
+    func submitInquiry(request: InquiryRequest) async throws -> PurchaseInquiry {
+        let response: APIResponse<PurchaseInquiry> = try await self.request(endpoint: "/inquiries", method: "POST", body: request)
         guard let data = response.data else { throw APIError.invalidResponse }
         return data
     }

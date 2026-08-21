@@ -39,10 +39,12 @@ struct MainTabView: View {
                     Label("ネットワーク", systemImage: "person.3.fill")
                 }
 
-            SettingsView()
-                .tabItem {
-                    Label("設定", systemImage: "gearshape.fill")
-                }
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem {
+                Label("設定", systemImage: "gearshape.fill")
+            }
         }
         .accentColor(.primaryNavy)
     }

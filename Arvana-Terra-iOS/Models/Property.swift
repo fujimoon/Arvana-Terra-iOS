@@ -9,15 +9,15 @@ struct Property: Codable, Identifiable {
     let totalRooms: Int
     let area: Double
     let status: String
-    let isPublic: Bool
+    let isPublic: Bool?
     let thumbnailUrl: String?
-    let imageUrls: [String]
+    let imageUrls: [String]?
     let purchasePrice: Double?
     let currentValue: Double?
     let notes: String?
     let ownerId: String?
     let createdAt: String
-    let updatedAt: String
+    let updatedAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id

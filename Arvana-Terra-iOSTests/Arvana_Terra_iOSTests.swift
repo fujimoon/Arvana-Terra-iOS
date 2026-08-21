@@ -162,7 +162,7 @@ final class ModelTests: XCTestCase {
         """.data(using: .utf8)!
 
         let decoder = JSONDecoder()
-        let task = try decoder.decode(Task.self, from: json)
+        let task = try decoder.decode(AppTask.self, from: json)
 
         XCTAssertEqual(task.id, "task-001")
         XCTAssertEqual(task.title, "エアコン点検")

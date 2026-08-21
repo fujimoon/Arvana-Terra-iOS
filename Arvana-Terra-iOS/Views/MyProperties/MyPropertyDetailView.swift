@@ -181,7 +181,7 @@ struct EditPropertyView: View {
         _name = State(initialValue: property.name)
         _address = State(initialValue: property.address)
         _status = State(initialValue: property.status)
-        _isPublic = State(initialValue: property.isPublic)
+        _isPublic = State(initialValue: property.isPublic ?? false)
         _currentValue = State(initialValue: property.currentValue.map { String($0) } ?? "")
         _notes = State(initialValue: property.notes ?? "")
     }

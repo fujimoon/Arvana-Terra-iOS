@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - App Configuration
 struct AppConfig {
-    static let apiBaseURL = "http://localhost:3000/api/v1"
-    static let wsURL = "ws://localhost:3000"
+    static let apiBaseURL = "http://localhost:3001/api/v1"
+    static let wsURL = "ws://localhost:3001"
     static let appName = "Arvana Terra"
     static let appVersion = "1.0.0"
 }

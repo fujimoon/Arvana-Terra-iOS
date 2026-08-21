@@ -80,6 +80,9 @@ class AuthViewModel: ObservableObject {
     private func fetchCurrentUser() async {
         do {
             currentUser = try await apiService.getCurrentUser()
+        } catch APIError.unauthorized {
+            apiService.clearTokens()
+            isAuthenticated = false
         } catch {
             print("AuthViewModel: Failed to fetch current user - \(error.localizedDescription)")
         }

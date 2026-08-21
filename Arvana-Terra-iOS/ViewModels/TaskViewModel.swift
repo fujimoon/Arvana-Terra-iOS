@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 class TaskViewModel: ObservableObject {
-    @Published var tasks: [Task] = []
+    @Published var tasks: [AppTask] = []
     @Published var aiSuggestions: [TaskSuggestion] = []
     @Published var isLoading = false
     @Published var isSuggesting = false
@@ -85,11 +85,11 @@ class TaskViewModel: ObservableObject {
         }
     }
 
-    var pendingTasks: [Task] { tasks.filter { $0.status == "pending" } }
-    var inProgressTasks: [Task] { tasks.filter { $0.status == "in_progress" } }
-    var completedTasks: [Task] { tasks.filter { $0.status == "completed" } }
+    var pendingTasks: [AppTask] { tasks.filter { $0.status == "pending" } }
+    var inProgressTasks: [AppTask] { tasks.filter { $0.status == "in_progress" } }
+    var completedTasks: [AppTask] { tasks.filter { $0.status == "completed" } }
 
-    var overdueTasks: [Task] {
+    var overdueTasks: [AppTask] {
         let formatter = ISO8601DateFormatter()
         let now = Date()
         return tasks.filter { task in

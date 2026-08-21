@@ -76,6 +76,42 @@
 		A085 /* ErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F085 /* ErrorView.swift */; };
 		A086 /* ThumbnailImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F086 /* ThumbnailImageView.swift */; };
 		A087 /* ChatRoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F087 /* ChatRoomView.swift */; };
+		A088 /* Payment.swift in Sources */ = {isa = PBXBuildFile; fileRef = F088 /* Payment.swift */; };
+		A089 /* SmartDeviceData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F089 /* SmartDeviceData.swift */; };
+		A090 /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = F090 /* Chat.swift */; };
+		A091 /* Schedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F091 /* Schedule.swift */; };
+		A092 /* PurchaseInquiry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F092 /* PurchaseInquiry.swift */; };
+		A093 /* SaleListingRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F093 /* SaleListingRequest.swift */; };
+		A094 /* UserPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = F094 /* UserPreference.swift */; };
+		A042 /* PaymentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F042 /* PaymentViewModel.swift */; };
+		A043 /* SmartDeviceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F043 /* SmartDeviceViewModel.swift */; };
+		A044 /* SaleRequestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F044 /* SaleRequestViewModel.swift */; };
+		A045 /* InquiryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F045 /* InquiryViewModel.swift */; };
+		A006 /* ChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F006 /* ChatService.swift */; };
+		A007 /* ScheduleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F007 /* ScheduleService.swift */; };
+		A008 /* RoomService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F008 /* RoomService.swift */; };
+		A009 /* RegionModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F009 /* RegionModeManager.swift */; };
+		A095 /* PropertyCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F095 /* PropertyCreateView.swift */; };
+		A096 /* PropertySaleRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F096 /* PropertySaleRequestView.swift */; };
+		A097 /* LandCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F097 /* LandCreateView.swift */; };
+		A098 /* LandManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F098 /* LandManageView.swift */; };
+		A099 /* LandSaleRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F099 /* LandSaleRequestView.swift */; };
+		A100 /* RoomFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100 /* RoomFormView.swift */; };
+		A101 /* TenantFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F101 /* TenantFormView.swift */; };
+		A102 /* FamilyMemberFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F102 /* FamilyMemberFormView.swift */; };
+		A103 /* InquiryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F103 /* InquiryView.swift */; };
+		A104 /* PaymentListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104 /* PaymentListView.swift */; };
+		A105 /* PaymentPropertySelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F105 /* PaymentPropertySelectorView.swift */; };
+		A106 /* SmartDeviceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F106 /* SmartDeviceListView.swift */; };
+		A107 /* NotificationListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F107 /* NotificationListView.swift */; };
+		A108 /* ScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F108 /* ScheduleView.swift */; };
+		A109 /* ScheduleFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F109 /* ScheduleFormView.swift */; };
+		A110 /* ScheduleDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F110 /* ScheduleDetailView.swift */; };
+		A111 /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F111 /* ChatListView.swift */; };
+		A112 /* MySaleRequestsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F112 /* MySaleRequestsView.swift */; };
+		A113 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = F113 /* Color+Hex.swift */; };
+		A114 /* ModeSwitcherButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F114 /* ModeSwitcherButton.swift */; };
+		A115 /* PrefectureSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F115 /* PrefectureSelectorView.swift */; };
 		B001 /* Arvana_Terra_iOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001 /* Arvana_Terra_iOSTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -149,6 +185,42 @@
 		F085 /* ErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorView.swift; sourceTree = "<group>"; };
 		F086 /* ThumbnailImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailImageView.swift; sourceTree = "<group>"; };
 		F087 /* ChatRoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatRoomView.swift; sourceTree = "<group>"; };
+		F088 /* Payment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Payment.swift; sourceTree = "<group>"; };
+		F089 /* SmartDeviceData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartDeviceData.swift; sourceTree = "<group>"; };
+		F090 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
+		F091 /* Schedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Schedule.swift; sourceTree = "<group>"; };
+		F092 /* PurchaseInquiry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseInquiry.swift; sourceTree = "<group>"; };
+		F093 /* SaleListingRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaleListingRequest.swift; sourceTree = "<group>"; };
+		F094 /* UserPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreference.swift; sourceTree = "<group>"; };
+		F042 /* PaymentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentViewModel.swift; sourceTree = "<group>"; };
+		F043 /* SmartDeviceViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartDeviceViewModel.swift; sourceTree = "<group>"; };
+		F044 /* SaleRequestViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaleRequestViewModel.swift; sourceTree = "<group>"; };
+		F045 /* InquiryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InquiryViewModel.swift; sourceTree = "<group>"; };
+		F006 /* ChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatService.swift; sourceTree = "<group>"; };
+		F007 /* ScheduleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleService.swift; sourceTree = "<group>"; };
+		F008 /* RoomService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomService.swift; sourceTree = "<group>"; };
+		F009 /* RegionModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionModeManager.swift; sourceTree = "<group>"; };
+		F095 /* PropertyCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyCreateView.swift; sourceTree = "<group>"; };
+		F096 /* PropertySaleRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertySaleRequestView.swift; sourceTree = "<group>"; };
+		F097 /* LandCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandCreateView.swift; sourceTree = "<group>"; };
+		F098 /* LandManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandManageView.swift; sourceTree = "<group>"; };
+		F099 /* LandSaleRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandSaleRequestView.swift; sourceTree = "<group>"; };
+		F100 /* RoomFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomFormView.swift; sourceTree = "<group>"; };
+		F101 /* TenantFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TenantFormView.swift; sourceTree = "<group>"; };
+		F102 /* FamilyMemberFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyMemberFormView.swift; sourceTree = "<group>"; };
+		F103 /* InquiryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InquiryView.swift; sourceTree = "<group>"; };
+		F104 /* PaymentListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentListView.swift; sourceTree = "<group>"; };
+		F105 /* PaymentPropertySelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentPropertySelectorView.swift; sourceTree = "<group>"; };
+		F106 /* SmartDeviceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartDeviceListView.swift; sourceTree = "<group>"; };
+		F107 /* NotificationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationListView.swift; sourceTree = "<group>"; };
+		F108 /* ScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleView.swift; sourceTree = "<group>"; };
+		F109 /* ScheduleFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleFormView.swift; sourceTree = "<group>"; };
+		F110 /* ScheduleDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleDetailView.swift; sourceTree = "<group>"; };
+		F111 /* ChatListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListView.swift; sourceTree = "<group>"; };
+		F112 /* MySaleRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySaleRequestsView.swift; sourceTree = "<group>"; };
+		F113 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		F114 /* ModeSwitcherButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSwitcherButton.swift; sourceTree = "<group>"; };
+		F115 /* PrefectureSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrefectureSelectorView.swift; sourceTree = "<group>"; };
 		T001 /* Arvana_Terra_iOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arvana_Terra_iOSTests.swift; sourceTree = "<group>"; };
 		PROD001 /* Arvana-Terra-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Arvana-Terra-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		TEST001 /* Arvana-Terra-iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Arvana-Terra-iOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -183,6 +255,7 @@
 				MODELS_GROUP /* Models */,
 				VIEWMODELS_GROUP /* ViewModels */,
 				VIEWS_GROUP /* Views */,
+				EXT_GROUP /* Extensions */,
 			);
 			path = "Arvana-Terra-iOS";
 			sourceTree = "<group>";
@@ -200,6 +273,10 @@
 			children = (
 				F004 /* APIService.swift */,
 				F005 /* SocketService.swift */,
+				F006 /* ChatService.swift */,
+				F007 /* ScheduleService.swift */,
+				F008 /* RoomService.swift */,
+				F009 /* RegionModeManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -221,6 +298,13 @@
 				F021 /* BusinessOpportunity.swift */,
 				F022 /* AssetValuation.swift */,
 				F023 /* Notification.swift */,
+				F088 /* Payment.swift */,
+				F089 /* SmartDeviceData.swift */,
+				F090 /* Chat.swift */,
+				F091 /* Schedule.swift */,
+				F092 /* PurchaseInquiry.swift */,
+				F093 /* SaleListingRequest.swift */,
+				F094 /* UserPreference.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -240,6 +324,10 @@
 				F039 /* SnsViewModel.swift */,
 				F040 /* OpportunityViewModel.swift */,
 				F041 /* ValuationViewModel.swift */,
+				F042 /* PaymentViewModel.swift */,
+				F043 /* SmartDeviceViewModel.swift */,
+				F044 /* SaleRequestViewModel.swift */,
+				F045 /* InquiryViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -264,6 +352,12 @@
 				SNS_GROUP /* SNS */,
 				SETTINGS_GROUP /* Settings */,
 				COMPONENTS_GROUP /* Components */,
+				PAYMENTS_GROUP /* Payments */,
+				SMART_DEVICES_GROUP /* SmartDevices */,
+				NOTIFICATIONS_GROUP /* Notifications */,
+				SCHEDULE_GROUP /* Schedule */,
+				CHAT_GROUP /* Chat */,
+				SALE_REQUESTS_GROUP /* SaleRequests */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -280,17 +374,17 @@
 		};
 		PUBLIC_GROUP = {
 			isa = PBXGroup;
-			children = (F053 /* PublicPropertyListView.swift */, F054 /* PublicPropertyDetailView.swift */, F055 /* PublicLandListView.swift */, F056 /* PublicLandDetailView.swift */);
+			children = (F053 /* PublicPropertyListView.swift */, F054 /* PublicPropertyDetailView.swift */, F055 /* PublicLandListView.swift */, F056 /* PublicLandDetailView.swift */, F103 /* InquiryView.swift */);
 			path = Public; sourceTree = "<group>";
 		};
 		MYPROPS_GROUP = {
 			isa = PBXGroup;
-			children = (F057 /* MyPropertyListView.swift */, F058 /* MyPropertyDetailView.swift */, F059 /* PropertyManageView.swift */, F060 /* PropertyChatListView.swift */);
+			children = (F057 /* MyPropertyListView.swift */, F058 /* MyPropertyDetailView.swift */, F059 /* PropertyManageView.swift */, F060 /* PropertyChatListView.swift */, F095 /* PropertyCreateView.swift */, F096 /* PropertySaleRequestView.swift */);
 			path = MyProperties; sourceTree = "<group>";
 		};
 		MYLANDS_GROUP = {
 			isa = PBXGroup;
-			children = (F061 /* MyLandListView.swift */, F062 /* MyLandDetailView.swift */);
+			children = (F061 /* MyLandListView.swift */, F062 /* MyLandDetailView.swift */, F097 /* LandCreateView.swift */, F098 /* LandManageView.swift */, F099 /* LandSaleRequestView.swift */);
 			path = MyLands; sourceTree = "<group>";
 		};
 		EQUIP_GROUP = {
@@ -310,7 +404,7 @@
 		};
 		ROOMS_GROUP = {
 			isa = PBXGroup;
-			children = (F068 /* RoomListView.swift */, F069 /* RoomDetailView.swift */);
+			children = (F068 /* RoomListView.swift */, F069 /* RoomDetailView.swift */, F100 /* RoomFormView.swift */, F101 /* TenantFormView.swift */, F102 /* FamilyMemberFormView.swift */);
 			path = Rooms; sourceTree = "<group>";
 		};
 		EMPLOYEES_GROUP = {
@@ -359,8 +453,45 @@
 				F085 /* ErrorView.swift */,
 				F086 /* ThumbnailImageView.swift */,
 				F087 /* ChatRoomView.swift */,
+				F114 /* ModeSwitcherButton.swift */,
+				F115 /* PrefectureSelectorView.swift */,
 			);
 			path = Components; sourceTree = "<group>";
+		};
+		PAYMENTS_GROUP = {
+			isa = PBXGroup;
+			children = (F104 /* PaymentListView.swift */, F105 /* PaymentPropertySelectorView.swift */);
+			path = Payments; sourceTree = "<group>";
+		};
+		SMART_DEVICES_GROUP = {
+			isa = PBXGroup;
+			children = (F106 /* SmartDeviceListView.swift */);
+			path = SmartDevices; sourceTree = "<group>";
+		};
+		NOTIFICATIONS_GROUP = {
+			isa = PBXGroup;
+			children = (F107 /* NotificationListView.swift */);
+			path = Notifications; sourceTree = "<group>";
+		};
+		SCHEDULE_GROUP = {
+			isa = PBXGroup;
+			children = (F108 /* ScheduleView.swift */, F109 /* ScheduleFormView.swift */, F110 /* ScheduleDetailView.swift */);
+			path = Schedule; sourceTree = "<group>";
+		};
+		CHAT_GROUP = {
+			isa = PBXGroup;
+			children = (F111 /* ChatListView.swift */);
+			path = Chat; sourceTree = "<group>";
+		};
+		SALE_REQUESTS_GROUP = {
+			isa = PBXGroup;
+			children = (F112 /* MySaleRequestsView.swift */);
+			path = SaleRequests; sourceTree = "<group>";
+		};
+		EXT_GROUP = {
+			isa = PBXGroup;
+			children = (F113 /* Color+Hex.swift */);
+			path = Extensions; sourceTree = "<group>";
 		};
 		TEST_GROUP = {
 			isa = PBXGroup;
@@ -448,6 +579,11 @@
 				A061, A062, A063, A064, A065, A066, A067, A068, A069, A070, A071,
 				A072, A073, A074, A075, A076, A077, A078, A079,
 				A080, A081, A082, A083, A084, A085, A086, A087,
+				A042, A043, A045,
+				A088, A089, A091, A092, A093, A094,
+				A103,
+				A104, A105, A106, A107,
+				A110,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

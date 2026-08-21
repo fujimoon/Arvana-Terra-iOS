@@ -60,7 +60,7 @@ struct TaskManageView: View {
 }
 
 struct TaskDetailRow: View {
-    let task: Task
+    let task: AppTask
     @ObservedObject var vm: TaskViewModel
 
     var body: some View {

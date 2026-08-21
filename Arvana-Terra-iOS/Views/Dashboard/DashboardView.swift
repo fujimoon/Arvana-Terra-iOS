@@ -262,7 +262,7 @@ struct DashboardCard: View {
 }
 
 struct TaskRowView: View {
-    let task: Task
+    let task: AppTask
 
     var body: some View {
         HStack(spacing: 12) {

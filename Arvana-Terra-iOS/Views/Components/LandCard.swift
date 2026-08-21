@@ -61,7 +61,7 @@ struct LandCard: View {
                 }
                 .padding(.top, 4)
 
-                if land.isPublic {
+                if land.isPublic == true {
                     HStack {
                         Spacer()
                         Label("公開中", systemImage: "eye.fill")

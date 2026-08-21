@@ -102,7 +102,7 @@ struct EditLandView: View {
         _name = State(initialValue: land.name)
         _address = State(initialValue: land.address)
         _status = State(initialValue: land.status)
-        _isPublic = State(initialValue: land.isPublic)
+        _isPublic = State(initialValue: land.isPublic ?? false)
         _currentValue = State(initialValue: land.currentValue.map { String($0) } ?? "")
         _notes = State(initialValue: land.notes ?? "")
     }

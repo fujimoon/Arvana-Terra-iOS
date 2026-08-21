@@ -36,6 +36,37 @@ struct Room: Codable, Identifiable {
     }
 }
 
+struct Tenant: Codable, Identifiable {
+    let id: String
+    let roomId: String
+    let name: String
+    let nameKana: String?
+    let email: String?
+    let phone: String?
+    let birthDate: String?
+    let gender: String?
+    let occupation: String?
+    let workplace: String?
+    let workplacePhone: String?
+    let annualIncome: Int?
+    let emergencyContactName: String?
+    let emergencyContactPhone: String?
+    let moveInDate: String?
+    let moveOutDate: String?
+    let notes: String?
+    let createdAt: String
+    let updatedAt: String
+}
+
+struct FamilyMember: Codable, Identifiable {
+    let id: String
+    let tenantId: String
+    let name: String
+    let relationship: String
+    let birthDate: String?
+    let notes: String?
+}
+
 struct CreateRoomRequest: Codable {
     let propertyId: String
     let roomNumber: String

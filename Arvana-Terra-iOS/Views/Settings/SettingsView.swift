@@ -8,41 +8,43 @@ struct SettingsView: View {
     @AppStorage("apiBaseURL") private var apiBaseURL = AppConfig.apiBaseURL
 
     var body: some View {
-        NavigationStack {
-            List {
+        List {
                 // Profile section
                 Section {
-                    HStack(spacing: 14) {
-                        Circle()
-                            .fill(Color.accentBlue.opacity(0.15))
-                            .frame(width: 60, height: 60)
-                            .overlay(
-                                Text(String(authVM.currentUser?.name.prefix(1) ?? "U"))
-                                    .font(.title).fontWeight(.bold).foregroundColor(.primaryNavy)
-                            )
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(authVM.currentUser?.name ?? "ユーザー")
-                                .font(.headline).foregroundColor(.textDark)
-                            Text(authVM.currentUser?.email ?? "")
-                                .font(.subheadline).foregroundColor(.textGray)
-                            Text(roleLabel(authVM.currentUser?.role ?? ""))
-                                .font(.caption)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8).padding(.vertical, 3)
-                                .background(Color.primaryNavy)
-                                .clipShape(Capsule())
+                    NavigationLink {
+                        UserProfileView()
+                            .environmentObject(authVM)
+                    } label: {
+                        HStack(spacing: 14) {
+                            Circle()
+                                .fill(Color.accentBlue.opacity(0.15))
+                                .frame(width: 60, height: 60)
+                                .overlay(
+                                    Text(String(authVM.currentUser?.name.prefix(1) ?? "U"))
+                                        .font(.title).fontWeight(.bold).foregroundColor(.primaryNavy)
+                                )
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(authVM.currentUser?.name ?? "ユーザー")
+                                    .font(.headline).foregroundColor(.textDark)
+                                Text(authVM.currentUser?.email ?? "")
+                                    .font(.subheadline).foregroundColor(.textGray)
+                                Text(roleLabel(authVM.currentUser?.role ?? ""))
+                                    .font(.caption)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 8).padding(.vertical, 3)
+                                    .background(Color.primaryNavy)
+                                    .clipShape(Capsule())
+                            }
+                            Spacer()
                         }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption).foregroundColor(.textGray)
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
 
                 // Navigation items
                 Section("管理") {
-                    SettingsRow(icon: "building.2.fill", title: "マイ物件", subtitle: "物件の管理", color: .primaryNavy) {
-                        NavigationLink("") { MyPropertyListView() }
+                    SettingsNavRow(icon: "building.2.fill", title: "マイ物件", color: .primaryNavy) {
+                        AnyView(MyPropertyListView())
                     }
                     SettingsNavRow(icon: "map.fill", title: "マイ土地", color: .secondaryBlue) {
                         AnyView(MyLandListView())
@@ -131,15 +133,14 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationTitle("設定")
-            .alert("ログアウト", isPresented: $showLogoutAlert) {
-                Button("キャンセル", role: .cancel) {}
-                Button("ログアウト", role: .destructive) {
-                    Task { await authVM.logout() }
-                }
-            } message: {
-                Text("ログアウトしますか？")
+        .navigationTitle("設定")
+        .alert("ログアウト", isPresented: $showLogoutAlert) {
+            Button("キャンセル", role: .cancel) {}
+            Button("ログアウト", role: .destructive) {
+                Task { await authVM.logout() }
             }
+        } message: {
+            Text("ログアウトしますか？")
         }
     }
 
@@ -170,6 +171,76 @@ struct SettingsRow<Content: View>: View {
                 .overlay(Image(systemName: icon).font(.caption).foregroundColor(color))
             Text(title)
             Spacer()
+        }
+    }
+}
+
+struct UserProfileView: View {
+    @EnvironmentObject var authVM: AuthViewModel
+
+    var body: some View {
+        List {
+            Section {
+                HStack(spacing: 16) {
+                    Circle()
+                        .fill(Color.accentBlue.opacity(0.15))
+                        .frame(width: 72, height: 72)
+                        .overlay(
+                            Text(String(authVM.currentUser?.name.prefix(1) ?? "U"))
+                                .font(.largeTitle).fontWeight(.bold).foregroundColor(.primaryNavy)
+                        )
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(authVM.currentUser?.name ?? "ユーザー")
+                            .font(.title3).fontWeight(.semibold)
+                        Text(authVM.currentUser?.email ?? "")
+                            .font(.subheadline).foregroundColor(.textGray)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+
+            Section("アカウント情報") {
+                ProfileRow(label: "役割", value: roleLabelFull(authVM.currentUser?.role ?? ""))
+                ProfileRow(label: "ユーザーID", value: authVM.currentUser?.id ?? "-")
+                if let createdAt = authVM.currentUser?.createdAt {
+                    ProfileRow(label: "登録日", value: formatDate(createdAt))
+                }
+            }
+        }
+        .navigationTitle("プロフィール")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    func roleLabelFull(_ role: String) -> String {
+        switch role {
+        case "owner": return "オーナー"
+        case "manager": return "管理者"
+        case "tenant": return "テナント"
+        case "vendor": return "業者"
+        case "admin": return "システム管理者"
+        case "landlord": return "大家"
+        default: return role
+        }
+    }
+
+    func formatDate(_ iso: String) -> String {
+        let f = ISO8601DateFormatter()
+        guard let d = f.date(from: iso) else { return iso }
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "ja_JP")
+        df.dateStyle = .medium
+        return df.string(from: d)
+    }
+}
+
+struct ProfileRow: View {
+    let label: String
+    let value: String
+    var body: some View {
+        HStack {
+            Text(label).foregroundColor(.textGray)
+            Spacer()
+            Text(value).foregroundColor(.textDark).multilineTextAlignment(.trailing)
         }
     }
 }

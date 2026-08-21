@@ -8,9 +8,9 @@ struct User: Codable, Identifiable {
     let avatarUrl: String?
     let phoneNumber: String?
     let companyName: String?
-    let isActive: Bool
-    let createdAt: String
-    let updatedAt: String
+    let isActive: Bool?
+    let createdAt: String?
+    let updatedAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id

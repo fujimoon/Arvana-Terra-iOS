@@ -74,7 +74,7 @@ struct PropertyCard: View {
                         .font(.caption)
                         .foregroundColor(.accentBlue)
                     Spacer()
-                    if property.isPublic {
+                    if property.isPublic == true {
                         Label("公開中", systemImage: "eye.fill")
                             .font(.caption)
                             .foregroundColor(.successGreen)
