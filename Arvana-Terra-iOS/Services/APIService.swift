@@ -484,6 +484,52 @@ class APIService: ObservableObject {
         guard let data = response.data else { throw APIError.invalidResponse }
         return data
     }
+
+    // MARK: - Payment Endpoints
+    func getPayments(propertyId: String, status: String? = nil) async throws -> [Payment] {
+        var endpoint = "/properties/\(propertyId)/payments"
+        if let s = status { endpoint += "?status=\(s)" }
+        let response: PaginatedResponse<Payment> = try await request(endpoint: endpoint)
+        return response.data
+    }
+
+    func createPayment(propertyId: String, request: CreatePaymentRequest) async throws -> Payment {
+        let response: APIResponse<Payment> = try await request(endpoint: "/properties/\(propertyId)/payments", method: "POST", body: request)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    // MARK: - Notification Endpoints
+    func getNotifications() async throws -> [AppNotification] {
+        let response: PaginatedResponse<AppNotification> = try await request(endpoint: "/notifications")
+        return response.data
+    }
+
+    func markNotificationRead(id: String) async throws {
+        let _: APIResponse<EmptyResponse> = try await request(endpoint: "/notifications/\(id)/read", method: "PATCH")
+    }
+
+    func markAllNotificationsRead() async throws {
+        let _: APIResponse<EmptyResponse> = try await request(endpoint: "/notifications/read-all", method: "PATCH")
+    }
+
+    // MARK: - Smart Device Endpoints
+    func getSmartDevices(propertyId: String) async throws -> [SmartDeviceData] {
+        let response: APIResponse<[SmartDeviceData]> = try await request(endpoint: "/properties/\(propertyId)/smart-devices")
+        return response.data ?? []
+    }
+
+    func getSmartDeviceById(propertyId: String, id: String) async throws -> SmartDeviceData {
+        let response: APIResponse<SmartDeviceData> = try await request(endpoint: "/properties/\(propertyId)/smart-devices/\(id)")
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
+
+    func createSmartDevice(propertyId: String, request: CreateSmartDeviceRequest) async throws -> SmartDeviceData {
+        let response: APIResponse<SmartDeviceData> = try await request(endpoint: "/properties/\(propertyId)/smart-devices", method: "POST", body: request)
+        guard let data = response.data else { throw APIError.invalidResponse }
+        return data
+    }
 }
 
 // MARK: - Empty Response Helper

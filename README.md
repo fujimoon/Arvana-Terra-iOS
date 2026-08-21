@@ -6,7 +6,7 @@
 
 ## アプリ概要
 
-Arvana Terra iOSは、不動産オーナー・管理者向けの資産管理アプリです。物件・土地の管理、入居者・契約管理、設備管理、従業員・業者管理、リアルタイムチャット、SNSネットワーク、AIタスク提案、資産評価シミュレーションなど、不動産ビジネスに必要なすべての機能をスマートフォンから直感的に利用できます。
+Arvana Terra iOSは、不動産オーナー・管理者向けの資産管理アプリです。物件・土地の管理、入居者・契約管理、設備管理、入金管理、スマートデバイス監視、従業員・業者管理、リアルタイムチャット、SNSネットワーク、AIタスク提案、資産評価シミュレーションなど、不動産ビジネスに必要なすべての機能をスマートフォンから直感的に利用できます。
 
 ---
 
@@ -85,6 +85,19 @@ Views → ViewModels → Services (APIService, SocketService)
 - **TaskManageView** - タスク一覧 (未着手/進行中/完了)
 - **AISuggestView** - AIタスク提案
 
+### 入金管理
+- **PaymentPropertySelectorView** - 物件・土地選択 (入金管理・スマートデバイスへのナビ)
+- **PaymentListView** - 入金一覧・サマリー (合計額/滞納件数/予定件数)
+- **AddPaymentView** - 入金記録追加フォーム
+
+### スマートデバイス
+- **SmartDeviceListView** - デバイス一覧 (電力計・水道計・カメラ等)
+- **AddSmartDeviceView** - デバイス追加フォーム
+
+### 通知センター
+- **NotificationListView** - 通知一覧 (既読/未読バッジ表示)
+  - 通知タイプ: 入金期日・滞納・カメラアラート・契約期限・タスク・チャット
+
 ### 従業員・業者
 - **EmployeeListView** - 従業員一覧
 - **EmployeeDetailView** - 従業員詳細
@@ -109,7 +122,7 @@ Views → ViewModels → Services (APIService, SocketService)
 - **ValuationView** - 資産評価履歴・シミュレーション
 
 ### 設定タブ
-- **SettingsView** - プロフィール・各種管理へのナビゲーション・ログアウト
+- **SettingsView** - プロフィール・入金管理・スマートデバイス・通知センター・ログアウト
 
 ---
 
@@ -183,6 +196,21 @@ DELETE /api/v1/properties/:id     → 物件削除
 GET    /api/v1/lands/public       → 公開土地一覧
 GET    /api/v1/lands/my           → マイ土地一覧
 
+# 入金管理
+GET    /api/v1/payments/property/:propertyId  → 物件別入金一覧
+POST   /api/v1/payments                        → 入金記録追加
+
+# スマートデバイス
+GET    /api/v1/properties/:id/smart-devices   → デバイス一覧
+GET    /api/v1/properties/:id/smart-devices/:deviceId → デバイス詳細
+POST   /api/v1/properties/:id/smart-devices   → デバイス追加
+PUT    /api/v1/properties/:id/smart-devices/:deviceId → デバイス更新
+
+# 通知
+GET    /api/v1/notifications                  → 通知一覧
+PATCH  /api/v1/notifications/:id/read         → 既読にする
+PATCH  /api/v1/notifications/read-all         → 全て既読
+
 # チャット
 GET    /api/v1/chat/rooms              → チャットルーム一覧
 GET    /api/v1/chat/rooms/:id/messages → メッセージ一覧
@@ -243,6 +271,8 @@ Arvana-Terra-iOS/
 │   │   ├── SnsPost.swift
 │   │   ├── BusinessOpportunity.swift
 │   │   ├── AssetValuation.swift
+│   │   ├── Payment.swift
+│   │   ├── SmartDeviceData.swift
 │   │   └── Notification.swift
 │   ├── ViewModels/                # @MainActor ObservableObject
 │   │   ├── AuthViewModel.swift
@@ -256,7 +286,9 @@ Arvana-Terra-iOS/
 │   │   ├── VendorViewModel.swift
 │   │   ├── SnsViewModel.swift
 │   │   ├── OpportunityViewModel.swift
-│   │   └── ValuationViewModel.swift
+│   │   ├── ValuationViewModel.swift
+│   │   ├── PaymentViewModel.swift
+│   │   └── SmartDeviceViewModel.swift
 │   └── Views/                     # SwiftUI Views
 │       ├── Auth/
 │       ├── Dashboard/
@@ -273,6 +305,13 @@ Arvana-Terra-iOS/
 │       ├── Opportunities/
 │       ├── Valuation/
 │       ├── SNS/
+│       ├── Payments/
+│       │   ├── PaymentPropertySelectorView.swift
+│       │   └── PaymentListView.swift
+│       ├── SmartDevices/
+│       │   └── SmartDeviceListView.swift
+│       ├── Notifications/
+│       │   └── NotificationListView.swift
 │       ├── Settings/
 │       └── Components/
 ├── Arvana-Terra-iOS.xcodeproj/

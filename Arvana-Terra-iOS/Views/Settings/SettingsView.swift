@@ -56,6 +56,15 @@ struct SettingsView: View {
                     SettingsNavRow(icon: "doc.text.fill", title: "契約管理", color: .successGreen) {
                         AnyView(ContractListView())
                     }
+                    SettingsNavRow(icon: "yensign.circle.fill", title: "入金管理", color: .primaryNavy) {
+                        AnyView(PaymentPropertySelectorView())
+                    }
+                    SettingsNavRow(icon: "sensor.tag.radiowaves.forward.fill", title: "スマートデバイス", color: .accentBlue) {
+                        AnyView(SmartDevicePropertySelectorView())
+                    }
+                    SettingsNavRow(icon: "bell.fill", title: "通知センター", color: .warningOrange) {
+                        AnyView(NotificationListView())
+                    }
                     SettingsNavRow(icon: "chart.bar.fill", title: "分析・可視化", color: .errorRed) {
                         AnyView(VisualizationView())
                     }
